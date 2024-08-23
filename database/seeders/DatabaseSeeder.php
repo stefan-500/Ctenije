@@ -22,15 +22,9 @@ class DatabaseSeeder extends Seeder
         //     'email' => 'test@example.com',
         // ]);
 
-        User::factory(5)->state(new Sequence(
-            [
-                'ovlascenje' => 'Korisnik',
-                'informacije' => 1
-            ],
-            [
-                'ovlascenje' => 'Menadzer',
-                'informacije' => 0
-            ],
+        User::factory(10)->state(new Sequence(
+            ['ovlascenje' => 'Korisnik'],
+            ['ovlascenje' => 'Menadzer']
         ))->create();
     }
 }

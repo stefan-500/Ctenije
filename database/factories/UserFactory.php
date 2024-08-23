@@ -30,9 +30,8 @@ class UserFactory extends Factory
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'ovlascenje' => 'Korisnik',
-            'tel' => fake()->e164PhoneNumber(),
-            'adresa' => fake()->streetAddress(),
-            'informacije' => 0,
+            'tel' => '+3816' . fake()->randomDigitNotNull() . fake()->numberBetween(100, 999) . fake()->numberBetween(1000, 9999),
+            'adresa' => fake()->streetAddress() . ' ' . fake()->postcode() . ' ' . fake()->city(),
             'remember_token' => Str::random(10),
         ];
     }

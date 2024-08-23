@@ -19,9 +19,8 @@ return new class extends Migration {
             $table->string('password', 255);
             $table->enum('ovlascenje', ['Korisnik', 'Menadzer', 'Administrator'])->default('Korisnik');
             $table->string('tel', 15);
-            $table->string('adresa', 50);
+            $table->string('adresa', 80);
             $table->timestamps(); // Datumi registracije i poslednje izmijene
-            $table->tinyInteger('informacije')->default(0);
             $table->rememberToken();
         });
 

@@ -30,14 +30,52 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'ime' => [
+                'required',
+                'string',
+                'regex:/^[A-Z]{1}[a-zA-Z]{3,15}$/'
+            ],
+            'prezime' => [
+                'required',
+                'string',
+                'regex:/^[A-Z]{1}[a-zA-Z]{3,15}$/'
+            ],
+            'email' => [
+                'required',
+                'string',
+                'lowercase',
+                'email',
+                'max:255',
+                'unique:' . User::class
+            ],
+            'adresa' => [
+                'required',
+                'string',
+                'regex:/^[a-zA-Z]{1,15}(\s[a-zA-Z]{1,15})?(\s[a-zA-Z]{1,12})?(\s[a-zA-Z0-9]{1,20})?\s[a-zA-Z0-9]{1,3}\,\s[0-9]{5}\s[a-zA-z]{3,13}$/'
+            ],
+            'tel' => [
+                'required',
+                'string',
+                'regex:/^\+3816([0-9]){6,9}$/'
+            ],
+            'password' => [
+                'required',
+                'confirmed',
+                Rules\Password::min(8)
+                    ->max(16)
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols()
+                    ->uncompromised()
+            ],
         ]);
 
         $user = User::create([
-            'name' => $request->name,
+            'ime' => $request->ime,
+            'prezime' => $request->prezime,
             'email' => $request->email,
+            'adresa' => $request->adresa,
+            'tel' => $request->tel,
             'password' => Hash::make($request->password),
         ]);
 
