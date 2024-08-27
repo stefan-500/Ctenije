@@ -53,4 +53,9 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $this->notify(new CustomResetPasswordNotification($token));
     }
+
+    public function porudzbine()
+    {
+        return $this->hasMany(Porudzbina::class);
+    }
 }
