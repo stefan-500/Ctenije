@@ -14,6 +14,10 @@ export default {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
             },
+            colors: {
+                'naslov': '#333', // Boja naslova
+                'tekst': '#555', // Boja obicnog teksta
+            },
         },
     },
 

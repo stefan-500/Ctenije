@@ -1,11 +1,15 @@
 <?php
 
+use App\Http\Controllers\KnjigaController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [KnjigaController::class, 'index']);
+
+Route::get('/knjige', [KnjigaController::class, 'listaKnjiga']);
+Route::get('/knjige/{vrstaArtikla}', [KnjigaController::class, 'listaKnjiga']);
+Route::get('/knjige/knjiga/{artikal_id}', [KnjigaController::class, 'show']);
+
 
 Route::get('/dashboard', function () {
     return view('dashboard');

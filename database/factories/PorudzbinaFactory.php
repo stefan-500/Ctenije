@@ -22,7 +22,6 @@ class PorudzbinaFactory extends Factory
             'adresa_isporuke' => fake()->streetAddress() . ' ' . fake()->postcode() . ' ' . fake()->city(),
             'ukupno' => fake()->numberBetween(90000, 20000000),
             'status' => fake()->randomElement(['neobradjeno', 'u obradi', 'zakljuceno', 'odbijeno']),
-            // 'user_id' => User::factory(),
             'user_id' => 1,
         ];
     }

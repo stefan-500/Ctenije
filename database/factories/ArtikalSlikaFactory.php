@@ -18,7 +18,8 @@ class ArtikalSlikaFactory extends Factory
     public function definition(): array
     {
         return [
-            'naziv_fajla' => 'img/' . fake()->word() . '_' . fake()->word() . '.jpg',
+            // 'naziv_fajla' => 'img/' . fake()->word() . '_' . fake()->word() . '.jpg',
+            'naziv_fajla' => 'knjiga-placeholder.png',
             'artikal_id' => 1,
         ];
     }

@@ -19,6 +19,8 @@ class KnjigaFactory extends Factory
     {
         return [
             'isbn' => fake()->isbn13(),
+            'autor' => fake()->name(),
+            'izdavac' => fake()->company(),
             'izdanje' => fake()->year(),
             'br_stranica' => fake()->numberBetween(50, 1500),
             'pismo' => fake()->randomElement(['Ćirilica', 'Latinica']),

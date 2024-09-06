@@ -19,8 +19,17 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      */
+
+
     public function run(): void
     {
+        $this->call([
+            VrstaArtikalaSeeder::class,
+            ArtikalSeeder::class,
+            ArtikalSlikaSeeder::class,
+            KnjigaSeeder::class,
+        ]);
+
         $korisnici = User::factory(10)->state(new Sequence(
             ['ovlascenje' => 'Korisnik'],
             ['ovlascenje' => 'Menadzer']
@@ -31,41 +40,34 @@ class DatabaseSeeder extends Seeder
             $porudzbina->save();
         });
 
-        $nadVrsteArtikala = VrstaArtikala::factory(5)->create();
+        $nadVrsteArtikala = VrstaArtikala::all(); // VrstaArtikalaSeeder podaci
 
         // Kreiranje podvrsta za neke od $nadVrsteArtikala
-        $podVrsteArtikala = VrstaArtikala::factory(6)->make()->each(function ($podVrsta) use ($nadVrsteArtikala) {
+        $podVrsteArtikala = VrstaArtikala::factory(2)->make()->each(function ($podVrsta) use ($nadVrsteArtikala) {
             $podVrsta->nadvrsta_id = $nadVrsteArtikala->random()->id;
             $podVrsta->save();
         });
 
         $vrsteArtikala = $nadVrsteArtikala->merge($podVrsteArtikala);
 
-        $knjige = Knjiga::factory(20)
+        $knjige = Knjiga::factory(5)
             ->create()
             ->each(function ($knjiga) use ($vrsteArtikala) {
-                // Za svaki instancu Knjige kreira se ArtikalSlika
-                // sa istim artikal_id  
+                // Nakon pozivanja ArtikalSlikaSeeder koriste se ti podaci
                 ArtikalSlika::factory()->create([
                     'artikal_id' => $knjiga->artikal_id,
                 ]);
 
                 // Dodavanje redova u pivot tabelu
-                // Za svaki artikal upisuje se 1-3 vrsti artikla
                 $knjiga->artikal->vrsteArtikla()->attach(
                     $vrsteArtikala->random(rand(1, 3))->pluck('id')->toArray()
                 );
             });
 
-        // Dodjela nasumicnih postojecih artikal_id i porudzbina_id vrijednosti stavci porudzbine
-        StavkaPorudzbine::factory(30)->make()->each(function ($stavka) use ($knjige, $porudzbine) {
-
+        StavkaPorudzbine::factory(15)->make()->each(function ($stavka) use ($knjige, $porudzbine) {
             $stavka->artikal_id = $knjige->random()->artikal_id;
-
             $stavka->porudzbina_id = $porudzbine->random()->id;
-
             $stavka->save();
         });
-
     }
 }

@@ -14,6 +14,8 @@ return new class extends Migration {
         Schema::create('knjigas', function (Blueprint $table) {
             // $table->id();
             $table->string('isbn', 13)->primary();
+            $table->string('autor', 40);
+            $table->string('izdavac', 200);
             $table->integer('izdanje');
             $table->integer('br_stranica');
             $table->enum('pismo', ['Ćirilica', 'Latinica'])->default('Ćirilica');

@@ -21,7 +21,7 @@ class ArtikalFactory extends Factory
 
         return [
             'naziv' => ucfirst(implode(' ', fake()->words(2))),
-            'opis' => implode(' ', fake()->sentences(5)),
+            'opis' => implode(' ', fake()->sentences(20)),
             'cijena' => $cijena,
             'akcijska_cijena' => $akcijskaCijena,
             'dostupna_kolicina' => fake()->numberBetween(0, 30),
