@@ -14,7 +14,7 @@ return new class extends Migration {
         Schema::create('porudzbinas', function (Blueprint $table) {
             $table->id();
             $table->dateTime('datum');
-            $table->string('adresa_isporuke', 80);
+            $table->string('adresa_isporuke', 80)->nullable();
             $table->integer('ukupno');
             $table->enum('status', ['neobradjeno', 'u obradi', 'zakljuceno', 'odbijeno']);
             $table->foreignIdFor(User::class)->constrained()->onDelete('cascade'); // set null ili cascade?

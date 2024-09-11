@@ -2,13 +2,20 @@
 
 use App\Http\Controllers\KnjigaController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PorudzbinaController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [KnjigaController::class, 'index']);
-
 Route::get('/knjige', [KnjigaController::class, 'listaKnjiga']);
 Route::get('/knjige/{vrstaArtikla}', [KnjigaController::class, 'listaKnjiga']);
 Route::get('/knjige/knjiga/{artikal_id}', [KnjigaController::class, 'show']);
+
+Route::get('/cart', [PorudzbinaController::class, 'index']);
+Route::post('/add-to-cart', [PorudzbinaController::class, 'addToCart']);
+Route::get('/cart-count', [PorudzbinaController::class, 'getCartCount']);
+Route::post('/cart/increment', [PorudzbinaController::class, 'incrementQuantity']);
+Route::post('/cart/decrement', [PorudzbinaController::class, 'decrementQuantity']);
+
 
 
 Route::get('/dashboard', function () {

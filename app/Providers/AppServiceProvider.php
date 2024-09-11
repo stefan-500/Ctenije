@@ -2,11 +2,14 @@
 
 namespace App\Providers;
 
+use App\Services\CartService;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
 use App\Models\VrstaArtikala;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Porudzbina;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,9 +34,17 @@ class AppServiceProvider extends ServiceProvider
                 ->action('Verifikacija Email Adrese', $url);
         });
 
-        // Cini $vrsteArtikala iz KnjigaController-a vidljivim u svim pogledima, ukljucujuci nav.blade.php
+        // Cini $vrsteArtikala i $cartCount vidljivim u nav.blade.php
         View::composer('components.nav', function ($view) {
-            $view->with('vrsteArtikala', VrstaArtikala::all());
+            $vrsteArtikala = VrstaArtikala::all();
+
+            $cartService = new CartService();
+            $cartCount = $cartService->getCartCount();
+
+            $view->with([
+                'vrsteArtikala' => $vrsteArtikala,
+                'cartCount' => $cartCount
+            ]);
         });
     }
 }

@@ -1,4 +1,4 @@
-   <nav class="bg-gray-800 text-white px-6 py-4">
+   <nav class="sticky top-0 z-50 bg-gray-800 text-white px-6 py-4">
        <div class="container mx-auto flex items-center justify-between relative">
            <a class="text-2xl font-bold mr-8 tracking-wider" href="/">Чтеније</a>
 
@@ -116,11 +116,10 @@
                        </x-dropdown>
                    @endauth
 
-                   <!-- Cart Icon -->
-                   <a href="../cart.php"
-                       class="bg-yellow-500 text-white px-5 py-3 rounded-lg flex items-center text-lg">
+                   {{-- Cart --}}
+                   <a href="/cart" class="bg-yellow-500 text-white px-5 py-3 rounded-lg flex items-center text-lg">
                        <i class="fa-solid fa-cart-shopping text-xl"></i>
-                       <span id="cart-count" class="ml-2">0</span>
+                       <span id="cart-count" class="ml-2">{{ $cartCount ?? 0 }}</span>
                    </a>
                </div>
            </div>

@@ -36,9 +36,10 @@
                                         <span class="text-xl font-bold">{{ $knjiga->artikal->formatiranaCijena }}</span>
                                         <span class="ml-1 text-sm font-semibold text-tekst">RSD</span>
                                     </div>
+                                    <!-- Add To Cart -->
                                     <div class="w-full sm:w-auto">
-                                        <a name="addToCart" href=""
-                                            class="bg-green-500 text-white text-xl hover:bg-green-600 transition w-full sm:w-auto px-11 py-2 rounded-lg flex items-center justify-center">
+                                        <a href="" data-artikal-id="{{ $knjiga->artikal->id }}"
+                                            class="bg-green-500 text-white text-xl hover:bg-green-600 transition w-full sm:w-auto px-11 py-2 rounded-lg flex items-center justify-center add-to-cart">
                                             <i class="fa-solid fa-cart-plus text-lg"></i>
                                         </a>
                                     </div>

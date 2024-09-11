@@ -44,9 +44,6 @@
                 </p>
             </div>
 
-
-
-            <!-- Pricing and Add to Cart button -->
             <div class="w-full md:w-1/3 mt-4 md:mt-0">
                 <div class="bg-gray-100 p-4 rounded-lg shadow-md text-center">
                     <h5 class="text-xl font-bold mb-4">{{ __('Cijena:') }}</h5>
@@ -68,16 +65,14 @@
                             <span class="ml-1 text-xl uppercase font-extrabold">{{ __('RSD') }}</span>
                         </p>
                     @endif
+                    <a href="" data-artikal-id="{{ $knjiga->artikal->id }}"
+                        class="add-to-cart md:w-3/4 mx-auto bg-blue-500 hover:bg-blue-700 text-white font-bold py-3 px-10 rounded transition ease-in-out duration-150 cursor-pointer">
+                        {{ __('Dodaj u korpu') }}
+                    </a>
 
-                    <form action="">
-                        @csrf
-                        <button name="btnDodaj" type="submit"
-                            class="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded transition ease-in-out duration-150">
-                            {{ __('Dodaj u korpu') }}
-                        </button>
-                    </form>
                 </div>
             </div>
+
 
 
             <!-- Row for the book description -->
