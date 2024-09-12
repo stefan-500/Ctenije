@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.centered {
+  justify-content: center !important;
+  flex-direction: column;
+  text-align: center;
+}

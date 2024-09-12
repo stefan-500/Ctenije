@@ -15,6 +15,9 @@ Route::post('/add-to-cart', [PorudzbinaController::class, 'addToCart']);
 Route::get('/cart-count', [PorudzbinaController::class, 'getCartCount']);
 Route::post('/cart/increment', [PorudzbinaController::class, 'incrementQuantity']);
 Route::post('/cart/decrement', [PorudzbinaController::class, 'decrementQuantity']);
+Route::post('/cart/remove', [PorudzbinaController::class, 'removeFromCart']);
+
+Route::get('/dostava', [PorudzbinaController::class, 'showDeliveryForm']);
 
 
 

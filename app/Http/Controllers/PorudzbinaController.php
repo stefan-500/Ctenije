@@ -61,6 +61,10 @@ class PorudzbinaController extends Controller
 
         $artikal = Artikal::findOrFail($request->artikal_id);
 
+        if ($artikal->dostupna_kolicina == 0) {
+            return response()->json(['error' => __('Nema dostupnih količina za ovaj artikal')], 400);
+        }
+
         if (Auth::check()) {
             // Ako je korisnik prijavljen, Porudzbina i StavkaPorudzbine se cuvaju u bazi podataka
             $porudzbina = Porudzbina::firstOrCreate(
@@ -86,8 +90,12 @@ class PorudzbinaController extends Controller
                 ]
             );
 
-            // Ako stavka vec postoji kolicina i ukupna cijena se azuriraju
+            // Ako stavka vec postoji, provjerava se kolicina na lageru 
             if (!$stavkaPorudzbine->wasRecentlyCreated) {
+                if ($stavkaPorudzbine->kolicina + 1 > $artikal->dostupna_kolicina) {
+                    return response()->json(['error' => __('Ne možete dodati više, dostupna količina je ograničena')], 400);
+                }
+                // Kolicina i ukupna cijena se azuriraju
                 $stavkaPorudzbine->increment('kolicina');
                 $stavkaPorudzbine->ukupna_cijena = $stavkaPorudzbine->artikal->akcijska_cijena ?? $stavkaPorudzbine->artikal->cijena * $stavkaPorudzbine->kolicina;
                 $stavkaPorudzbine->save();
@@ -99,13 +107,17 @@ class PorudzbinaController extends Controller
             $cartCount = $porudzbina->stavkePorudzbine->sum('kolicina');
 
         } else {
-            // Ako korisnik nije prijavljen podaci se cuvaju u sesiji
+            // Korisnik nije prijavljen - podaci se cuvaju u sesiji
 
-            // Uzima trenutni cart iz sesije ili inicijalizuje niz;
             $cart = session()->get('cart', []);
 
             // Ako artikal postoji u korpi kolicina se uvecava
             if (isset($cart[$artikal->id])) {
+                // Provjera kolicine na lageru
+                if ($cart[$artikal->id]['kolicina'] + 1 > $artikal->dostupna_kolicina) {
+                    return response()->json(['error' => __('Ne možete dodati više, dostupna količina je ograničena')], 400);
+                }
+
                 $cart[$artikal->id]['kolicina']++;
             } else {
                 $cart[$artikal->id] = [
@@ -116,11 +128,7 @@ class PorudzbinaController extends Controller
                 ];
             }
 
-            $cartCount = 0;
-            // Azuriranje broja artikala u sesiji za prikaz u navigaciji
-            foreach ($cart as $cartItem) {
-                $cartCount += $cartItem['kolicina'];
-            }
+            $cartCount = array_sum(array_column($cart, 'kolicina'));
 
             session()->put('cart', $cart);
             session()->put('cart_count', $cartCount);
@@ -141,6 +149,7 @@ class PorudzbinaController extends Controller
     public function incrementQuantity(Request $request)
     {
         $artikalId = $request->input('artikal_id');
+        $artikal = Artikal::findOrFail($artikalId);
 
         if (Auth::check()) {
             // Trenutna porudzbina prijavljenog korisnika
@@ -153,7 +162,12 @@ class PorudzbinaController extends Controller
                 ->where('artikal_id', $artikalId)
                 ->firstOrFail();
 
-            $stavka->kolicina++;
+            // Provjera da li ima dovoljno kolicine na lageru
+            if ($stavka->kolicina >= $stavka->artikal->dostupna_kolicina) {
+                return response()->json(['error' => __('Ne možete dodati više, dostupna količina je ograničena.')], 400);
+            }
+
+            $stavka->increment('kolicina');
             $stavka->ukupna_cijena = $stavka->kolicina * ($stavka->artikal->akcijska_cijena ?? $stavka->artikal->cijena);
             $stavka->save();
 
@@ -172,13 +186,16 @@ class PorudzbinaController extends Controller
             $artikalId = $request->input('artikal_id');
 
             if (isset($cart[$artikalId])) {
+                if ($cart[$artikalId]['kolicina'] >= $artikal->dostupna_kolicina) {
+                    return response()->json(['error' => __('Ne možete dodati više, dostupna količina je ograničena.')], 400);
+                }
+
                 $cart[$artikalId]['kolicina']++;
                 $cart[$artikalId]['ukupna_cijena'] = $cart[$artikalId]['kolicina'] * $cart[$artikalId]['cijena'];
                 session()->put('cart', $cart);
             }
 
             $cijenaPorudzbine = array_sum(array_column($cart, 'ukupna_cijena'));
-
             $cartCount = array_sum(array_column($cart, 'kolicina'));
             $stavka = $cart[$artikalId];
         }
@@ -249,6 +266,61 @@ class PorudzbinaController extends Controller
         ]);
     }
 
+    public function removeFromCart(Request $request)
+    {
+        // artikal_id iz AJAX zahtijeva
+        $artikalId = $request->input('artikal_id');
+
+        if (Auth::check()) {
+            $porudzbina = Porudzbina::where('user_id', Auth::id())
+                ->where('status', 'neobradjeno')
+                ->with('stavkePorudzbine')
+                ->firstOrFail();
+
+            $stavka = StavkaPorudzbine::where('porudzbina_id', $porudzbina->id)
+                ->where('artikal_id', $artikalId)
+                ->firstOrFail();
+
+            // Brisanje stavke iz bp za prijavljenog korisnika
+            $stavka->delete();
+
+            // Ponovno ucitavanje stavki
+            $porudzbina->load('stavkePorudzbine');
+
+            $porudzbina->ukupno = $porudzbina->stavkePorudzbine->sum('ukupna_cijena');
+            $porudzbina->save();
+
+            $cartCount = $porudzbina->stavkePorudzbine->sum('kolicina');
+            $porudzbinaUkupno = formatirajCijenu($porudzbina->ukupno);
+        } else {
+            $cart = session()->get('cart', []);
+
+            // Brisanje stavke iz sesije za neprijavljenog korisnika
+            if (isset($cart[$artikalId])) {
+                unset($cart[$artikalId]);
+            }
+
+            $cartCount = array_sum(array_column($cart, 'kolicina'));
+
+            $cijenaPorudzbine = 0;
+            foreach ($cart as $stavka) {
+                $cijenaPorudzbine += $stavka['cijena'] * $stavka['kolicina'];
+            }
+            $porudzbinaUkupno = formatirajCijenu($cijenaPorudzbine);
+
+            session()->put('cart', $cart);
+        }
+
+        return response()->json([
+            'porudzbina_ukupno' => $porudzbinaUkupno,
+            'cart_count' => $cartCount
+        ]);
+    }
+
+    public function showDeliveryForm()
+    {
+        return view('dostava');
+    }
 
     /**
      * Show the form for creating a new resource.
