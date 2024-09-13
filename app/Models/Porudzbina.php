@@ -20,4 +20,9 @@ class Porudzbina extends Model
     {
         return $this->hasMany(StavkaPorudzbine::class);
     }
+
+    public function guestDeliveryData()
+    {
+        return $this->belongsTo(GuestDeliveryData::class);
+    }
 }

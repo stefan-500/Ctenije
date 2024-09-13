@@ -17,7 +17,12 @@ Route::post('/cart/increment', [PorudzbinaController::class, 'incrementQuantity'
 Route::post('/cart/decrement', [PorudzbinaController::class, 'decrementQuantity']);
 Route::post('/cart/remove', [PorudzbinaController::class, 'removeFromCart']);
 
-Route::get('/dostava', [PorudzbinaController::class, 'showDeliveryForm']);
+Route::get('set-delivery-step', [PorudzbinaController::class, 'setDeliveryStep']);
+Route::get('/dostava', [PorudzbinaController::class, 'showDeliveryForm'])->middleware('checkDeliveryStep');
+Route::post('/dostava', [PorudzbinaController::class, 'sacuvajPodatkeDostave']);
+Route::get('/stripe-payment', function () {
+    return view('stripe-payment');
+});
 
 
 

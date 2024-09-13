@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\GuestDeliveryData;
 use App\Models\Porudzbina;
 use Illuminate\Http\Request;
 use App\Models\Artikal;
 use Illuminate\Support\Facades\Auth;
 use App\Models\StavkaPorudzbine;
 use App\Services\CartService;
+use App\Models\User;
 
 class PorudzbinaController extends Controller
 {
@@ -74,7 +76,8 @@ class PorudzbinaController extends Controller
                 ],
                 [
                     'datum' => now(),
-                    'ukupno' => 0
+                    'ukupno' => 0,
+                    'adresa_isporuke' => Auth::user()->adresa
                 ]
             );
 
@@ -281,17 +284,23 @@ class PorudzbinaController extends Controller
                 ->where('artikal_id', $artikalId)
                 ->firstOrFail();
 
-            // Brisanje stavke iz bp za prijavljenog korisnika
             $stavka->delete();
 
             // Ponovno ucitavanje stavki
             $porudzbina->load('stavkePorudzbine');
 
-            $porudzbina->ukupno = $porudzbina->stavkePorudzbine->sum('ukupna_cijena');
-            $porudzbina->save();
+            // Ako su obrisane sve stavke porudzbine i porudzbina se brise
+            if ($porudzbina->stavkePorudzbine->isEmpty()) {
+                $porudzbina->delete();
+                $cartCount = 0;
+                $porudzbinaUkupno = formatirajCijenu(0);
+            } else {
+                $porudzbina->ukupno = $porudzbina->stavkePorudzbine->sum('ukupna_cijena');
+                $porudzbina->save();
 
-            $cartCount = $porudzbina->stavkePorudzbine->sum('kolicina');
-            $porudzbinaUkupno = formatirajCijenu($porudzbina->ukupno);
+                $cartCount = $porudzbina->stavkePorudzbine->sum('kolicina');
+                $porudzbinaUkupno = formatirajCijenu($porudzbina->ukupno);
+            }
         } else {
             $cart = session()->get('cart', []);
 
@@ -319,7 +328,122 @@ class PorudzbinaController extends Controller
 
     public function showDeliveryForm()
     {
-        return view('dostava');
+        if (Auth::check()) {
+            // Aktivna porudzbina
+            $porudzbina = Porudzbina::where('user_id', Auth::id())
+                ->where('status', 'neobradjeno')
+                ->with('stavkePorudzbine')
+                ->first();
+
+            // Da li aktivna porudzbina postoji, da li porudzbina ima stavke(korisnik moze obrisati stavke)
+            if (!$porudzbina || $porudzbina->stavkePorudzbine->isEmpty()) {
+                return redirect('/cart')->with('error', __('Nema stavki u korpi za kupovinu.'));
+            }
+
+            $user = Auth::user();
+        } else {
+            // Neprijavljeni korisnik
+            $porudzbina = session()->get('cart', []);
+
+            if (empty($porudzbina)) {
+                return redirect('/cart')->with('error', __('Nema stavki u korpi za kupovinu.'));
+            }
+
+            $user = null;
+        }
+
+        return view('dostava', compact('porudzbina', 'user'));
+    }
+
+    public function setDeliveryStep()
+    {
+        // Varijabla sesije koja daje info da je korisnik nastavio na korak porudzbine za dostavu
+        session(['nastavak_na_dostavu' => true]);
+
+        return redirect('/dostava');
+    }
+
+    public function sacuvajPodatkeDostave(Request $request)
+    {
+        if (Auth::check()) {
+            $porudzbina = Porudzbina::where('user_id', Auth::id())
+                ->where('status', 'neobradjeno')
+                ->first();
+
+            if (!$porudzbina) {
+                return redirect('/cart')->with('error', __('Nema aktivne porudžbine.'));
+            }
+
+            return redirect('stripe-payment');
+        } else {
+            // Neprijavljeni korisnik
+
+            $cart = session()->get('cart', []);
+
+            if (empty($cart)) {
+                return redirect('/cart')->with('error', __('Vaša korpa je prazna.'));
+            }
+
+            $data = $request->validate([
+                'ime' => [
+                    'required',
+                    'string',
+                    'regex:/^[A-Z]{1}[a-zA-Z]{3,15}$/'
+                ],
+                'prezime' => [
+                    'required',
+                    'string',
+                    'regex:/^[A-Z]{1}[a-zA-Z]{3,15}$/'
+                ],
+                'email' => [
+                    'required',
+                    'string',
+                    'lowercase',
+                    'email',
+                    'max:255',
+                    'unique:' . User::class
+                ],
+                'adresa' => [
+                    'required',
+                    'string',
+                    'regex:/^[a-zA-Z]{1,15}(\s[a-zA-Z]{1,15})?(\s[a-zA-Z]{1,12})?(\s[a-zA-Z0-9]{1,20})?\s[a-zA-Z0-9]{1,3}\,\s[0-9]{5}\s[a-zA-z]{3,13}$/'
+                ],
+                'tel' => [
+                    'required',
+                    'string',
+                    'regex:/^\+3816([0-9]){6,9}$/'
+                ],
+            ]);
+
+            // Cuvanje podataka za dostavu za neprijavljenog korisnika
+            $guestDeliveryData = GuestDeliveryData::create($data);
+
+            // Cuvanje porudzbine 
+            $porudzbina = Porudzbina::create([
+                'user_id' => null,
+                'guest_delivery_data_id' => $guestDeliveryData->id,
+                'datum' => now(),
+                'adresa_isporuke' => $data['adresa'],
+                'ukupno' => array_sum(array_column($cart, 'ukupna_cijena')),
+                'status' => 'neobradjeno',
+            ]);
+
+            // Cuvanje stavci porudzbine
+            foreach ($cart as $stavka) {
+                StavkaPorudzbine::create([
+                    'porudzbina_id' => $porudzbina->id,
+                    'artikal_id' => $stavka['artikal_id'],
+                    'kolicina' => $stavka['kolicina'],
+                    'ukupna_cijena' => $stavka['kolicina'] * $stavka['cijena'],
+                ]);
+            }
+
+            // Brisanje cart sesije
+            session()->forget('cart');
+            // session()->forget('cart_count');
+
+            return redirect('/stripe-payment')->with('success', __('Podaci za dostavu su sačuvani.'));
+        }
     }
 
     /**

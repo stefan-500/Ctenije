@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\GuestDeliveryData;
 use App\Models\Porudzbina;
 use App\Models\User;
 use App\Models\Artikal;
@@ -24,6 +25,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            UserSeeder::class,
             VrstaArtikalaSeeder::class,
             ArtikalSeeder::class,
             ArtikalSlikaSeeder::class,
@@ -35,8 +37,19 @@ class DatabaseSeeder extends Seeder
             ['ovlascenje' => 'Menadzer']
         ))->create();
 
-        $porudzbine = Porudzbina::factory(10)->make()->each(function ($porudzbina) use ($korisnici) {
-            $porudzbina->user_id = $korisnici->random()->id;
+        $guestDeliveryData = GuestDeliveryData::factory(10)->create();
+
+        $porudzbine = Porudzbina::factory(10)->make()->each(function ($porudzbina) use ($korisnici, $guestDeliveryData) {
+            if (rand(1, 10) <= 7) {
+                // 70% 
+                $porudzbina->user_id = $korisnici->random()->id;
+                // $porudzbina->guest_delivery_data_id = null;
+            } else {
+                // 30% 
+                $porudzbina->guest_delivery_data_id = $guestDeliveryData->random()->id;
+                // $porudzbina->user_id = null;
+            }
+
             $porudzbina->save();
         });
 

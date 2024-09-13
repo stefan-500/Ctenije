@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\CheckDeliveryStep;
 use App\Services\CartService;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Auth\Notifications\VerifyEmail;
@@ -10,6 +11,7 @@ use App\Models\VrstaArtikala;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Porudzbina;
+use Illuminate\Support\Facades\Route;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -46,5 +48,8 @@ class AppServiceProvider extends ServiceProvider
                 'cartCount' => $cartCount
             ]);
         });
+
+        // Registracija middleware-a za pristup dostava.blade.php
+        Route::aliasMiddleware('checkDeliveryStep', CheckDeliveryStep::class);
     }
 }
