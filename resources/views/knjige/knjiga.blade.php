@@ -52,17 +52,17 @@
                         <p class="text-xl font-bold text-gray-500 mb-2">
                             <span class="font-extrabold line-through"> {{ $knjiga->artikal->formatiranaCijena }}
                             </span>
-                            <span class="ml-1 text-sm uppercase font-extrabold">{{ __('RSD') }}</span>
+                            <span class="ml-1 text-sm uppercase font-extrabold">{{ __('EUR') }}</span>
                         </p>
                         <p class="text-3xl font-bold text-red-600 mb-4">
                             <span class="font-extrabold">
                                 {{ $knjiga->artikal->formatiranaAkcijskaCijena }} </span>
-                            <span class="ml-1 text-xl uppercase font-extrabold">{{ __('RSD') }}</span>
+                            <span class="ml-1 text-xl uppercase font-extrabold">{{ __('EUR') }}</span>
                         </p>
                     @else
                         <p class="text-3xl font-bold text-red-600 mb-4">
                             <span class="font-extrabold"> {{ $knjiga->artikal->formatiranaCijena }} </span>
-                            <span class="ml-1 text-xl uppercase font-extrabold">{{ __('RSD') }}</span>
+                            <span class="ml-1 text-xl uppercase font-extrabold">{{ __('EUR') }}</span>
                         </p>
                     @endif
                     <a href="" data-artikal-id="{{ $knjiga->artikal->id }}"

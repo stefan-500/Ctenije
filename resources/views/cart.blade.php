@@ -11,9 +11,9 @@
             class="flex flex-wrap justify-center lg:justify-between m-auto space-y-6 lg:space-y-0 text-tekst py-12 px-11 cart">
             <div class="w-full lg:w-8/12">
 
-                {{-- @php
+                @php
                     dump(session()->get('cart'));
-                @endphp --}}
+                @endphp
                 <div class="flex justify-center">
                     <div class="w-full lg:w-10/12">
                         <x-naslov-sekcije class="mb-4 mt-2">{{ __('Korpa') }}</x-naslov-sekcije>
@@ -82,7 +82,7 @@
                     <span id="cart-total" class="text-3xl font-bold text-naslov">
                         {{ $formatiranaCijenaPorudzbine }}
                     </span>
-                    <span class="text-sm font-extrabold text-naslov uppercase">{{ __('rsd') }} </span>
+                    <span class="text-sm font-extrabold text-naslov uppercase">{{ __('eur') }} </span>
                 </div>
 
                 <div class="text-center mb-6">

@@ -20,7 +20,7 @@ class StavkaPorudzbineFactory extends Factory
     {
         return [
             'kolicina' => fake()->numberBetween(1, 3),
-            'ukupna_cijena' => fake()->numberBetween(450000, 900000),
+            'ukupna_cijena' => fake()->numberBetween(4500, 9000),
             // TODO
             'artikal_id' => 1,
             'porudzbina_id' => 1,

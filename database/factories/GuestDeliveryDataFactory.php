@@ -19,7 +19,7 @@ class GuestDeliveryDataFactory extends Factory
         return [
             'ime' => fake()->firstName(),
             'prezime' => fake()->lastName(),
-            'email' => fake()->unique()->email(),
+            'email' => fake()->email(),
             'tel' => '+3816' . fake()->randomDigitNotNull() . fake()->numberBetween(100, 999) . fake()->numberBetween(1000, 9999),
             'adresa' => fake()->streetAddress() . ' ' . fake()->postcode() . ' ' . fake()->city()
         ];

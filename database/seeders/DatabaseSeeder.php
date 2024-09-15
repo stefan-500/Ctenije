@@ -13,7 +13,7 @@ use App\Models\StavkaPorudzbine;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Eloquent\Factories\Sequence;
-
+use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
@@ -43,10 +43,13 @@ class DatabaseSeeder extends Seeder
             if (rand(1, 10) <= 7) {
                 // 70% 
                 $porudzbina->user_id = $korisnici->random()->id;
+                $porudzbina->stripe_payment_intent_id = 'pi_' . Str::random(24);
                 // $porudzbina->guest_delivery_data_id = null;
             } else {
                 // 30% 
                 $porudzbina->guest_delivery_data_id = $guestDeliveryData->random()->id;
+                $porudzbina->payment_token = Str::random(64);
+                $porudzbina->stripe_payment_intent_id = 'pi_' . Str::random(24);
                 // $porudzbina->user_id = null;
             }
 

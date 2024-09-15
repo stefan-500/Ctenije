@@ -34,7 +34,7 @@
                                     <div class="flex items-center text-lg mb-4 sm:mb-0">
                                         <i class="fa-solid fa-tag text-sm text-tekst mr-1"></i>
                                         <span class="text-xl font-bold">{{ $knjiga->artikal->formatiranaCijena }}</span>
-                                        <span class="ml-1 text-sm font-semibold text-tekst">RSD</span>
+                                        <span class="ml-1 text-sm font-semibold text-tekst">EUR</span>
                                     </div>
                                     <!-- Add To Cart -->
                                     <div class="w-full sm:w-auto">

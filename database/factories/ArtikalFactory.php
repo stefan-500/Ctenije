@@ -16,8 +16,8 @@ class ArtikalFactory extends Factory
      */
     public function definition(): array
     {
-        $cijena = fake()->numberBetween(1000, 900000);
-        $akcijskaCijena = fake()->optional()->numberBetween(900, $cijena);
+        $cijena = fake()->numberBetween(1000, 8000);
+        $akcijskaCijena = fake()->optional()->numberBetween(800, $cijena);
 
         return [
             'naziv' => ucfirst(implode(' ', fake()->words(2))),

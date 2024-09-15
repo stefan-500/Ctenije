@@ -1,5 +1,12 @@
 <x-app-layout>
 
+    @if (session('error'))
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mx-[3rem] rounded relative my-6"
+            role="alert">
+            <strong class="font-bold">{{ __('Greška!') }}</strong>
+            <span class="block sm:inline">{{ session('error') }}</span>
+        </div>
+    @endif
     {{-- Slajder --}}
     <section class="section slajder">
         <div id="carouselExampleCaptions" class="relative">
@@ -45,19 +52,19 @@
             <x-preporucujemo-card src="{{ asset('img/card.jpg') }}" alt="{{ __('Knjiga') }}"
                 naslov="{{ __('Naslov knjige') }}"
                 opis="{{ __('This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.') }}"
-                knjigaLink="#" cijena="1500,00" valuta="RSD" />
+                knjigaLink="#" cijena="1500,00" valuta="EUR" />
             <x-preporucujemo-card src="{{ asset('img/card.jpg') }}" alt="{{ __('Knjiga') }}"
                 naslov="{{ __('Naslov knjige') }}"
                 opis="{{ __('This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.') }}"
-                knjigaLink="#" cijena="1500,00" valuta="RSD" />
+                knjigaLink="#" cijena="1500,00" valuta="EUR" />
             <x-preporucujemo-card src="{{ asset('img/card.jpg') }}" alt="{{ __('Knjiga') }}"
                 naslov="{{ __('Naslov knjige') }}"
                 opis="{{ __('This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.') }}"
-                knjigaLink="#" cijena="1500,00" valuta="RSD" />
+                knjigaLink="#" cijena="1500,00" valuta="EUR" />
             <x-preporucujemo-card src="{{ asset('img/card.jpg') }}" alt="{{ __('Knjiga') }}"
                 naslov="{{ __('Naslov knjige') }}"
                 opis="{{ __('This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.') }}"
-                knjigaLink="#" cijena="1500,00" valuta="RSD" />
+                knjigaLink="#" cijena="1500,00" valuta="EUR" />
         </div>
         <!-- Kraj kartica -->
     </section>
@@ -81,18 +88,18 @@
                         <p class="text-xl font-semibold">
                             @if ($knjigaGodine->artikal->akcijska_cijena)
                                 <span class="text-xl line-through text-gray-500">{{ $formatiranaCijena }}</span>
-                                <span class="ml-2 text-sm font-bold text-gray-500 uppercase">{{ __('rsd') }}</span>
+                                <span class="ml-2 text-sm font-bold text-gray-500 uppercase">{{ __('EUR') }}</span>
                                 <br>
                                 <span
                                     class="text-3xl font-black text-red-500 cijena-knjigaGodine">{{ $formatiranaAkcijskaCijena }}</span>
                                 <span
-                                    class="ml-2 text-xl uppercase font-extrabold text-red-500">{{ __('rsd') }}</span>
+                                    class="ml-2 text-xl uppercase font-extrabold text-red-500">{{ __('EUR') }}</span>
                             @else
                                 <!-- Display Regular Price -->
                                 <span
                                     class="text-3xl font-black text-red-500 cijena-knjigaGodine">{{ $formatiranaCijena }}</span>
                                 <span
-                                    class="ml-2 text-xl uppercase font-extrabold text-red-500">{{ __('rsd') }}</span>
+                                    class="ml-2 text-xl uppercase font-extrabold text-red-500">{{ __('EUR') }}</span>
                             @endif
                         </p>
                     </div>

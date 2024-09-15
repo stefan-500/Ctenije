@@ -20,21 +20,21 @@ class ArtikalSeeder extends Seeder
                 [
                     'naziv' => 'Vladalac i narod',
                     'opis' => 'Sveobuhvatno teološko, antropološko i istoriografsko delo episkopa Save Dečanca jedan je od najznačajnijih naslova u istoriji pravoslavnog monarhizma. Nezaobilazna poveznica između Svetog Filareta Moskovskog i Svetog Nikolaja Ohridskog i Žičkog, dvojice savremenika sa početka i kraja njegovog života. Obnova krštene monarhije u Srbiji nezamisliva je bez ove knjige.',
-                    'cijena' => 65000,
-                    'akcijska_cijena' => 55000,
+                    'cijena' => 550,
+                    'akcijska_cijena' => 450,
                     'vrste_artikala' => [1, 2], // Duhovnost, istorija
                 ],
                 [
                     'naziv' => 'Rečnik spasenja',
                     'opis' => 'U knjizi Rečnik spasenja svaki hrišćanin, i monah i mirjanin, za svaku priliku – od bolesti do radosti, može naći reči utehe i ohrabrenja, istinsku duhovnu pouku i brigu čiji je cilj spasenje ljudske duše. Pojmovnik pravoslavnog življenja.',
-                    'cijena' => 139000,
+                    'cijena' => 1290,
                     'akcijska_cijena' => null,
                     'vrste_artikala' => 1,
                 ],
                 [
                     'naziv' => 'Tesla: Duhovni lik',
                     'opis' => 'Monografija Tesla: Duhovni lik predstavlja studiju rađenu u saradnji sa Muzejom Nikole Tesle u Beogradu, koji je suizdavač. U knjizi su obuhvaćene mnoge dimenzije ličnosti Nikole Tesle: njegovo poreklo i porodično okruženje, religijski i filozofski stavovi, životna etika i društveni pogledi, rodoljublje i mirotvorstvo.',
-                    'cijena' => 770000,
+                    'cijena' => 6500,
                     'akcijska_cijena' => null,
                     'vrste_artikala' => [2, 3], // Istorija, biografija
                 ],
@@ -59,29 +59,29 @@ class ArtikalSeeder extends Seeder
                     Ispovednik među Ispovednicima, eto to je sveti pisac ovog Srpskog Evanđelja.
 
                     Svetitelj među Svetiteljima, eto to je sveti pisac ovog Srpskog Evanđelja...',
-                    'cijena' => 190000,
+                    'cijena' => 1650,
                     'akcijska_cijena' => null,
                     'vrste_artikala' => 1
                 ],
                 [
                     'naziv' => 'Gospod Govori',
                     'opis' => 'Sveti Jefrem Sirijski je, uz Svetog Jovana Lestvičnika, bio jedan od najčitanijih duhovnih pisaca našeg Srednjeg veka. Ova knjiga pomaže savremenim Srbima da shvate Stari i Novi Zavet kao jedinstvenu celinu Otkrivenja Boga čoveku.',
-                    'cijena' => 159000,
-                    'akcijska_cijena' => 135000,
+                    'cijena' => 1400,
+                    'akcijska_cijena' => 1250,
                     'vrste_artikala' => 1
                 ],
                 [
                     'naziv' => 'Vera svetih – Katihizis',
                     'opis' => 'Hrišćanska vera je Hristovo znanje o najvažnijim Tajnama bića i života, koje ljudi mogu shvatiti samo verovanjem u Njega. Ova knjiga pokriva tajne o Bogu, anđelima, ljudskoj duši, stvaranju sveta, grehu i spasenju.',
-                    'cijena' => 35000,
+                    'cijena' => 300,
                     'akcijska_cijena' => null,
                     'vrste_artikala' => 1
                 ],
                 [
                     'naziv' => 'Srpski Prota Milutin Tesla',
                     'opis' => 'Prva knjiga o Milutinu Tesli donosi nova saznanja o presudnim uticajima oca Milutina na vaspitanje i obrazovanje sina Nikole. Knjiga istražuje životopis Milutina Tesle u svim njegovim aspektima i donosi priloge u originalnom obliku.',
-                    'cijena' => 70000,
-                    'akcijska_cijena' => 59900,
+                    'cijena' => 600,
+                    'akcijska_cijena' => 500,
                     'vrste_artikala' => [2, 3],
                 ],
             ];

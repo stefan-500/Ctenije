@@ -4,6 +4,7 @@ use App\Http\Controllers\KnjigaController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PorudzbinaController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PlacanjeController;
 
 Route::get('/', [KnjigaController::class, 'index']);
 Route::get('/knjige', [KnjigaController::class, 'listaKnjiga']);
@@ -20,11 +21,14 @@ Route::post('/cart/remove', [PorudzbinaController::class, 'removeFromCart']);
 Route::get('set-delivery-step', [PorudzbinaController::class, 'setDeliveryStep']);
 Route::get('/dostava', [PorudzbinaController::class, 'showDeliveryForm'])->middleware('checkDeliveryStep');
 Route::post('/dostava', [PorudzbinaController::class, 'sacuvajPodatkeDostave']);
-Route::get('/stripe-payment', function () {
-    return view('stripe-payment');
-});
+// Route::get('/stripe-payment', function () {
+//     return view('stripe-payment');
+// });
 
-
+Route::get('/placanje', [PlacanjeController::class, 'prikazFormePlacanja']);
+Route::post('/placanje', [PlacanjeController::class, 'obradaPlacanja']);
+Route::get('/placanje/uspijeh', [PlacanjeController::class, 'placanjeUspijeh'])->name('placanje.uspijeh');
+Route::get('/placanje/otkazano', [PlacanjeController::class, 'placanjeOtkazano'])->name('placanje.otkazano');
 
 Route::get('/dashboard', function () {
     return view('dashboard');

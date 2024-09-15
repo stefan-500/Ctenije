@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\StavkaPorudzbine;
 use App\Services\CartService;
 use App\Models\User;
+use Illuminate\Support\Str;
 
 class PorudzbinaController extends Controller
 {
@@ -374,7 +375,7 @@ class PorudzbinaController extends Controller
                 return redirect('/cart')->with('error', __('Nema aktivne porudžbine.'));
             }
 
-            return redirect('stripe-payment');
+            return redirect('/placanje');
         } else {
             // Neprijavljeni korisnik
 
@@ -384,6 +385,7 @@ class PorudzbinaController extends Controller
                 return redirect('/cart')->with('error', __('Vaša korpa je prazna.'));
             }
 
+            //TODO predstaviti greske na cart.blade
             $data = $request->validate([
                 'ime' => [
                     'required',
@@ -418,13 +420,22 @@ class PorudzbinaController extends Controller
             // Cuvanje podataka za dostavu za neprijavljenog korisnika
             $guestDeliveryData = GuestDeliveryData::create($data);
 
+            // Generise se zbog pronalazenja trenutne porudzbine neprijavljenog korisnika
+            $paymentToken = Str::random(64);
+
+            $cijenaPorudzbine = 0;
+            foreach ($cart as $stavka) {
+                $cijenaPorudzbine += $stavka['kolicina'] * $stavka['cijena'];
+            }
+
             // Cuvanje porudzbine 
             $porudzbina = Porudzbina::create([
                 'user_id' => null,
                 'guest_delivery_data_id' => $guestDeliveryData->id,
+                'payment_token' => $paymentToken,
                 'datum' => now(),
                 'adresa_isporuke' => $data['adresa'],
-                'ukupno' => array_sum(array_column($cart, 'ukupna_cijena')),
+                'ukupno' => $cijenaPorudzbine,
                 'status' => 'neobradjeno',
             ]);
 
@@ -439,10 +450,10 @@ class PorudzbinaController extends Controller
             }
 
             // Brisanje cart sesije
-            session()->forget('cart');
+            // session()->forget('cart');
             // session()->forget('cart_count');
 
-            return redirect('/stripe-payment')->with('success', __('Podaci za dostavu su sačuvani.'));
+            return redirect('/placanje?payment_token=' . urlencode($paymentToken))->with('success', __('Podaci za dostavu su sačuvani.'));
         }
     }
 

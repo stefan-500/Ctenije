@@ -20,10 +20,11 @@ class PorudzbinaFactory extends Factory
         return [
             'datum' => fake()->dateTime(),
             'adresa_isporuke' => fake()->streetAddress() . ' ' . fake()->postcode() . ' ' . fake()->city(),
-            'ukupno' => fake()->numberBetween(90000, 20000000),
+            'ukupno' => fake()->numberBetween(90000, 100000),
             'status' => fake()->randomElement(['neobradjeno', 'u obradi', 'zakljuceno', 'odbijeno']),
             'user_id' => null,
             'guest_delivery_data_id' => null,
+            'email_poslat' => true,
         ];
     }
 }

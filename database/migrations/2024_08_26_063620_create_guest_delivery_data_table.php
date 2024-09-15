@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->string('ime', 15);
             $table->string('prezime', 20);
-            $table->string('email', 50)->unique();
+            $table->string('email', 50);
             $table->string('adresa', 80);
             $table->string('tel', 15);
             $table->timestamps();
