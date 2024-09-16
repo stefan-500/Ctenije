@@ -16,8 +16,10 @@
                             <input
                                 class="appearance-none block w-full bg-[#f8f8f8] text-tekst border border-gray-300 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white placeholder:font-light font-semibold"
                                 id="ime" type="text" {{-- placeholder="{{ __('Zika') }}" --}} name="ime"
-                                value="{{ old('ime', $user->ime ?? '') }}" required>
-                            {{-- --}}
+                                value="{{ old('ime', $guestDeliveryData['ime'] ?? '') }}" required>
+                            @error('ime')
+                                <p class="text-red-500 text-xs italic">{{ $message }}</p>
+                            @enderror
                         </div>
                         <div class="w-full md:w-1/2 px-3">
                             <label class="block uppercase tracking-wide text-tekst text-xs font-bold mb-1"
@@ -25,7 +27,10 @@
                             <input
                                 class="appearance-none block w-full bg-[#f8f8f8] text-tekst border border-gray-300 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white placeholder:font-light font-semibold"
                                 id="prezime" type="text" {{-- placeholder="{{ __('Zikic') }}" --}} name="prezime"
-                                value="{{ old('prezime', $user->prezime ?? '') }}" required>
+                                value="{{ old('prezime', $guestDeliveryData['prezime'] ?? '') }}" required>
+                            @error('prezime')
+                                <p class="text-red-500 text-xs italic">{{ $message }}</p>
+                            @enderror
                         </div>
                     </div>
 
@@ -36,7 +41,10 @@
                         <input
                             class="appearance-none block w-full bg-[#f8f8f8] text-tekst border border-gray-300 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white placeholder:font-light font-semibold"
                             id="email" type="email" {{-- placeholder="{{ __('zika@mejl.com') }}" --}} name="email"
-                            value="{{ old('email', $user->email ?? '') }}" required>
+                            value="{{ old('email', $guestDeliveryData['email'] ?? '') }}" required>
+                        @error('email')
+                            <p class="text-red-500 text-xs italic">{{ $message }}</p>
+                        @enderror
                     </div>
 
                     <!-- Kontakt -->
@@ -46,7 +54,10 @@
                         <input
                             class="appearance-none block w-full bg-[#f8f8f8] text-tekst border border-gray-300 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white placeholder:font-light font-semibold"
                             id="tel" type="text" {{-- placeholder="{{ __('123-456-789') }}" --}} name="tel"
-                            value="{{ old('tel', $user->tel ?? '') }}" required>
+                            value="{{ old('tel', $guestDeliveryData['tel'] ?? '') }}" required>
+                        @error('tel')
+                            <p class="text-red-500 text-xs italic">{{ $message }}</p>
+                        @enderror
                     </div>
                 @endguest
 
@@ -57,7 +68,11 @@
                     @guest
                         <input
                             class="appearance-none block w-full bg-[#f8f8f8] text-tekst border border-gray-300 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white placeholder:font-light font-semibold"
-                            id="adresa" type="text" name="adresa" value="{{ old('adresa') }}" required>
+                            id="adresa" type="text" name="adresa"
+                            value="{{ old('adresa', $guestDeliveryData['adresa'] ?? '') }}" required>
+                        @error('adresa')
+                            <p class="text-red-500 text-xs italic">{{ $message }}</p>
+                        @enderror
                     @else
                         <p class="bg-[#f8f8f8] text-tekst border border-gray-300 rounded py-3 px-4 leading-tight">
                             {{ $user->adresa }}
@@ -94,6 +109,4 @@
             </div>
         </form>
     </div>
-
-
 </x-app-layout>

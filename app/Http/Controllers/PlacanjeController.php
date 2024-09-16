@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Porudzbina;
 use Illuminate\Support\Facades\Mail;
+use Stripe\PaymentIntent;
 
 class PlacanjeController extends Controller
 {
@@ -22,7 +23,6 @@ class PlacanjeController extends Controller
         } else {
             //Neprijavljeni korisnik
 
-            // Maybe there is no paymentToken?? From which request is it get?
             $paymentToken = request()->query('payment_token');
 
             if (!$paymentToken) {
@@ -36,19 +36,18 @@ class PlacanjeController extends Controller
                 ->firstOrFail();
         }
 
-        // Create a PaymentIntent
         \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
 
-        $intent = \Stripe\PaymentIntent::create([
-            'amount' => $porudzbina->ukupno, // amount saved in cents in database
+        $paymentIntent = PaymentIntent::create([
+            'amount' => $porudzbina->ukupno,
             'currency' => 'eur',
         ]);
 
-        // Pass the client secret and payment token to the view
         return view('placanje.placanje-form', [
             'porudzbina' => $porudzbina,
             'stripeKey' => config('services.stripe.key'),
-            'clientSecret' => $intent->client_secret,
+            'clientSecret' => $paymentIntent->client_secret,
+            'paymentIntentId' => $paymentIntent->id,
             'paymentToken' => $paymentToken,
         ]);
     }
@@ -114,9 +113,6 @@ class PlacanjeController extends Controller
                     // Logovanje greske
                     \Log::error('Neuspiješno slanje mejla potvrde porudžbine: ' . $e->getMessage());
 
-                    // Optionally, you can update the order status or take other actions
-                    // For example, set a flag on the order indicating email sending failed
-
                     // Moguce obavijestiti korisnika da je porudzbina uspijesna ali da mejl nije poslat
                     return response()->json([
                         'success' => true,
@@ -124,12 +120,22 @@ class PlacanjeController extends Controller
                     ]);
                 }
 
-                // Clear session data if necessary
+                session()->forget('cart');
                 session()->forget('nastavak_na_dostavu');
+                session()->forget('guest_delivery_data');
+
+                session()->put('payment_success', true);
+                // Ogranicavanje pristupa za /placanje/otkazano
+                session()->forget('payment_canceled');
 
                 return response()->json(['success' => true]);
 
+            } else if ($intent->status == 'requires_payment_method' || $intent->status == 'canceled') {
+                // Ako korisnik otkaze placanje
+                session()->put('payment_canceled', true);
+                session()->forget('payment_success');
             } else {
+
                 return response()->json(['error' => 'Plaćanje neuspiješno.'], 400);
             }
         } catch (\Exception $e) {
@@ -140,13 +146,61 @@ class PlacanjeController extends Controller
 
     public function placanjeUspijeh()
     {
+        if (!session()->has('payment_success')) {
+            return redirect('/')->with('error', 'Neovlašćen pristup.');
+        }
+
+        // Brisanje sesije nakon posjete stranice
+        session()->forget('payment_success');
+
         return view('placanje.uspijeh');
     }
 
-    public function placanjeOtkazano()
+
+
+    public function setPlacanjeOtkazano(Request $request)
     {
-        return view('placanje.otkazano');
+        $paymentIntentId = $request->payment_intent_id;
+        \Log::info('Received payment_intent_id for cancellation: ' . $paymentIntentId);
+
+        \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+
+        try {
+            // Trazenje instance PaymentIntent-a
+            $paymentIntent = PaymentIntent::retrieve($paymentIntentId);
+            $paymentIntent->cancel();
+
+            session()->put('payment_canceled', true);
+            session()->forget('payment_success');
+
+            \Log::info('PaymentIntent canceled successfully: ' . $paymentIntentId);
+
+            return response()->json(['status' => 'Plaćanje otkazano.']);
+        } catch (\Exception $e) {
+            \Log::error('Neuspješna obrada otkazivanja plaćanja: ' . $e->getMessage());
+            return response()->json(['error' => 'Došlo je do greške prilikom otkazivanja plaćanja.'], 500);
+        }
     }
 
+
+
+    public function placanjeOtkazano()
+    {
+
+        \Log::info('Accessing placanjeOtkazano. Session flags:');
+        \Log::info('payment_canceled: ' . session()->has('payment_canceled'));
+        \Log::info('payment_success: ' . session()->has('payment_success'));
+
+        // Check if the user came from a canceled payment
+        if (!session()->has('payment_canceled')) {
+            return redirect('/')->with('error', 'Neovlašćen pristup.');
+        }
+
+        // Brisanje sesije nakon posjete stranice
+        session()->forget('payment_canceled');
+        // session()->forget('payment_success'); 
+
+        return view('placanje.otkazano');
+    }
 
 }

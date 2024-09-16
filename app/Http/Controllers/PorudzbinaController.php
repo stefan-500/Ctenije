@@ -342,6 +342,7 @@ class PorudzbinaController extends Controller
             }
 
             $user = Auth::user();
+            $guestDeliveryData = null;
         } else {
             // Neprijavljeni korisnik
             $porudzbina = session()->get('cart', []);
@@ -350,10 +351,12 @@ class PorudzbinaController extends Controller
                 return redirect('/cart')->with('error', __('Nema stavki u korpi za kupovinu.'));
             }
 
+            // Podaci za dostavu ako postoje
+            $guestDeliveryData = session()->get('guest_delivery_data', null);
             $user = null;
         }
 
-        return view('dostava', compact('porudzbina', 'user'));
+        return view('dostava', compact('porudzbina', 'user', 'guestDeliveryData'));
     }
 
     public function setDeliveryStep()
@@ -417,10 +420,13 @@ class PorudzbinaController extends Controller
                 ],
             ]);
 
+            // Cuvanje podataka u sesiji za popunjavanje forme ako se otkaze placanje
+            session()->put('guest_delivery_data', $data);
+
             // Cuvanje podataka za dostavu za neprijavljenog korisnika
             $guestDeliveryData = GuestDeliveryData::create($data);
 
-            // Generise se zbog pronalazenja trenutne porudzbine neprijavljenog korisnika
+            // Zbog pronalazenja trenutne porudzbine neprijavljenog korisnika
             $paymentToken = Str::random(64);
 
             $cijenaPorudzbine = 0;

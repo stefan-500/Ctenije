@@ -28,6 +28,7 @@ Route::post('/dostava', [PorudzbinaController::class, 'sacuvajPodatkeDostave']);
 Route::get('/placanje', [PlacanjeController::class, 'prikazFormePlacanja']);
 Route::post('/placanje', [PlacanjeController::class, 'obradaPlacanja']);
 Route::get('/placanje/uspijeh', [PlacanjeController::class, 'placanjeUspijeh'])->name('placanje.uspijeh');
+Route::post('/placanje/set-otkazano', [PlacanjeController::class, 'setPlacanjeOtkazano'])->name('placanje.otkazi');
 Route::get('/placanje/otkazano', [PlacanjeController::class, 'placanjeOtkazano'])->name('placanje.otkazano');
 
 Route::get('/dashboard', function () {

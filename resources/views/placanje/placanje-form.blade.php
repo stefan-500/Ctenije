@@ -129,9 +129,9 @@
                                     </svg>
                                     <span id="button-text">{{ __('Plati') }}</span>
                                 </button>
-                                <button id="cancel-button"
+                                <button id="cancel-button" onclick="otkaziPlacanje()"
                                     class="w-full mt-4 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition duration-150 ease-in-out flex items-center justify-center">
-                                    {{ __('Otkaži plaćanje') }}
+                                    {{ __('Odustani') }}
                                 </button>
                             </form>
                         </div>
@@ -200,6 +200,36 @@
             });
         });
 
+
+        function otkaziPlacanje() {
+            var paymentIntentId = '{{ $paymentIntentId }}';
+
+            fetch('{{ route('placanje.otkazi') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        payment_intent_id: paymentIntentId
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status) {
+                        window.location.href = '{{ route('placanje.otkazano') }}';
+                    } else {
+                        alert(data.error || 'Došlo je do greške prilikom otkazivanja plaćanja.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Došlo je do greške prilikom otkazivanja plaćanja.');
+                });
+        }
+
+
+
         // Apply focus and blur event handlers to Stripe Elements to add outline
         function setFocusStyles(element, containerId) {
             element.on('focus', function() {
@@ -220,11 +250,6 @@
         var submitButton = document.getElementById('submit-button');
         var spinner = document.getElementById('spinner');
         var buttonText = document.getElementById('button-text');
-
-        document.getElementById('cancel-button').addEventListener('click', function(event) {
-            event.preventDefault();
-            window.location.href = '{{ route('placanje.otkazano') }}';
-        });
 
         form.addEventListener('submit', function(event) {
             event.preventDefault();
