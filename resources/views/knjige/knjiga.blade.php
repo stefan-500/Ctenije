@@ -8,8 +8,8 @@
                 <figure class="flex justify-center">
                     <div>
                         <img class="object-contain h-94 w-full"
-                            src="{{ asset('img/' . $knjiga->artikal->artikalSlike->first()->naziv_fajla) }}"
-                            alt="{{ __('Knjiga') }}">
+                            src="{{ asset('storage/img/' . $knjiga->artikal->artikalSlike->first()->naziv_fajla) }}"
+                            alt="{{ $knjiga->artikal->naziv }}">
                     </div>
 
                 </figure>
@@ -49,18 +49,18 @@
                     <h5 class="text-xl font-bold mb-4">{{ __('Cijena:') }}</h5>
 
                     @if ($knjiga->artikal->akcijska_cijena)
-                        <p class="text-xl font-bold text-gray-500 mb-2">
+                        <p class="text-xl font-bold text-red-500 mb-2">
                             <span class="font-extrabold line-through"> {{ $knjiga->artikal->formatiranaCijena }}
                             </span>
                             <span class="ml-1 text-sm uppercase font-extrabold">{{ __('EUR') }}</span>
                         </p>
-                        <p class="text-3xl font-bold text-red-600 mb-4">
+                        <p class="text-3xl font-bold text-naslov mb-4">
                             <span class="font-extrabold">
                                 {{ $knjiga->artikal->formatiranaAkcijskaCijena }} </span>
                             <span class="ml-1 text-xl uppercase font-extrabold">{{ __('EUR') }}</span>
                         </p>
                     @else
-                        <p class="text-3xl font-bold text-red-600 mb-4">
+                        <p class="text-3xl font-bold text-naslov mb-4">
                             <span class="font-extrabold"> {{ $knjiga->artikal->formatiranaCijena }} </span>
                             <span class="ml-1 text-xl uppercase font-extrabold">{{ __('EUR') }}</span>
                         </p>

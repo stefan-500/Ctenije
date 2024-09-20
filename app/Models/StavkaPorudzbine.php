@@ -13,7 +13,8 @@ class StavkaPorudzbine extends Model
 
     public function artikal()
     {
-        return $this->belongsTo(Artikal::class);
+        return $this->belongsTo(Artikal::class)->withTrashed();
+        // return $this->belongsTo(Artikal::class);
     }
 
     public function porudzbina()

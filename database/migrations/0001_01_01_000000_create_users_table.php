@@ -22,6 +22,7 @@ return new class extends Migration {
             $table->string('adresa', 80);
             $table->timestamps(); // Datumi registracije i poslednje izmijene
             $table->rememberToken();
+            $table->softDeletes(); // Dodaje 'deleted_at' kolonu
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

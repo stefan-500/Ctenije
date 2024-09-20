@@ -2,6 +2,14 @@
        <div class="container mx-auto flex items-center justify-between relative">
            <a class="text-2xl font-bold mr-8 tracking-wider" href="/">Чтеније</a>
 
+           @auth
+               <!-- Add the sidenav toggler button -->
+               @can('access-admin')
+                   <button id="sidenav-toggler" class="md:hidden bg-gray-800 text-white p-2 rounded-md">
+                       <i class="fa-solid fa-bars fa-lg"></i>
+                   </button>
+               @endcan
+           @endauth
            <!-- Toggler for mobile view -->
            <button
                class="lg:hidden px-4 py-2 border border-transparent rounded-md text-white hover:text-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white z-10"
@@ -47,8 +55,10 @@
                        </li>
                        <li class="relative flex items-center"><a class="text-lg hover:text-gray-300" href="#">
                                {{ __('O nama') }}</a></li>
-                       <li class="relative flex items-center"><a class="text-lg hover:text-gray-300"
-                               href="../admin/admin.php">{{ __('Admin') }}</a></li>
+                       @can('access-admin')
+                           <li class="relative flex items-center"><a class="text-lg hover:text-gray-300"
+                                   href="{{ url('/admin/') }}">{{ __('Admin') }}</a></li>
+                       @endcan
                    </ul>
                </div>
 
@@ -136,5 +146,22 @@
            navbarToggler.addEventListener('click', function() {
                navbarMenu.classList.toggle('hidden');
            });
+
+           // Toggle for user menu
+           const userMenuToggle = document.getElementById('user-menu-toggle');
+           const userMenu = document.getElementById('user-menu');
+
+           if (userMenuToggle && userMenu) {
+               userMenuToggle.addEventListener('click', function() {
+                   userMenu.classList.toggle('hidden');
+               });
+
+               // Close user menu when clicking outside
+               document.addEventListener('click', function(event) {
+                   if (!userMenuToggle.contains(event.target) && !userMenu.contains(event.target)) {
+                       userMenu.classList.add('hidden');
+                   }
+               });
+           }
        });
    </script>

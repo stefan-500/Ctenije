@@ -29,8 +29,8 @@ class UserSeeder extends Seeder
             [
                 'ime' => 'Test',
                 'prezime' => 'User',
-                'email' => 'testuser@example.com',
-                'password' => Hash::make('TestUser1!'), // or bcrypt('password')
+                'email' => 'testuser@ctenije.com',
+                'password' => Hash::make('Test123!'),
                 'tel' => '123456789',
                 'adresa' => 'Kralja Petra 10, 11000 Beograd',
                 'ovlascenje' => 'Korisnik',
@@ -39,8 +39,8 @@ class UserSeeder extends Seeder
             [
                 'ime' => 'Menadzer',
                 'prezime' => 'User',
-                'email' => 'janko.menadzer@ctenije.com',
-                'password' => Hash::make('Janko123!'), // or bcrypt('password')
+                'email' => 'zika.menadzer@ctenije.com',
+                'password' => Hash::make('Janko123!'),
                 'tel' => '123456789',
                 'adresa' => 'Savska 55, 11000 Beograd',
                 'ovlascenje' => 'Menadzer',

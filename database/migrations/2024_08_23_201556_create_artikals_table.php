@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->integer('akcijska_cijena')->nullable();
             $table->integer('dostupna_kolicina');
             $table->timestamps();
+            $table->softDeletes(); // Dodaje 'deleted_at' kolonu
         });
     }
 

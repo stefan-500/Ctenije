@@ -15,7 +15,7 @@ return new class extends Migration {
         Schema::create('vrsta_artikalas', function (Blueprint $table) {
             $table->id();
             $table->string('naziv', 50);
-            // constrained('vrsta_artikalas') - Bez argumenta sa nazivom table Laravel bi pretpostavio da se tabela kljuca 'nadvrsta_id' zove nadvrstas
+            // constrained('vrsta_artikalas') - Bez argumenta sa nazivom tabele Laravel bi pretpostavio da se tabela kljuca 'nadvrsta_id' zove nadvrstas
             $table->foreignIdFor(VrstaArtikala::class, 'nadvrsta_id')->nullable()->constrained('vrsta_artikalas')->onDelete('cascade');
             $table->timestamps();
         });

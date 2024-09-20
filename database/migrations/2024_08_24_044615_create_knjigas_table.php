@@ -12,7 +12,6 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('knjigas', function (Blueprint $table) {
-            // $table->id();
             $table->string('isbn', 13)->primary();
             $table->string('autor', 40);
             $table->string('izdavac', 200);
@@ -21,6 +20,7 @@ return new class extends Migration {
             $table->enum('pismo', ['Ćirilica', 'Latinica'])->default('Ćirilica');
             $table->timestamps();
             $table->foreignIdFor(Artikal::class)->constrained()->onDelete('cascade');
+            $table->softDeletes(); // Dodaje 'deleted_at' kolonu
         });
     }
 

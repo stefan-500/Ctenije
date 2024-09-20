@@ -19,7 +19,7 @@ return new class extends Migration {
             $table->integer('ukupno');
             $table->enum('status', ['neobradjeno', 'u obradi', 'zakljuceno', 'odbijeno']);
             $table->string('stripe_payment_intent_id')->nullable();
-            $table->foreignIdFor(User::class)->nullable()->constrained()->onDelete('cascade');
+            $table->foreignIdFor(User::class)->nullable()->constrained()->onDelete('set null');
             $table->string('payment_token', 64)->nullable()->unique();
             $table->foreignIdFor(GuestDeliveryData::class)->nullable()->constrained()->onDelete('cascade');
             $table->boolean('email_poslat')->default(false);

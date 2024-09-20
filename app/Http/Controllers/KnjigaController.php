@@ -14,55 +14,73 @@ class KnjigaController extends Controller
      */
     public function index()
     {
+
+        // Fetch four random recommended books, excluding soft-deleted ones
+        $preporuceneKnjige = Knjiga::whereHas('artikal', function ($query) {
+            $query->whereNull('deleted_at');
+        })
+            ->whereNull('knjigas.deleted_at')
+            ->with('artikal.artikalSlike')
+            ->inRandomOrder()
+            ->take(4)
+            ->get();
+
+        // Process each book to format prices and descriptions
+        foreach ($preporuceneKnjige as $knjiga) {
+            $knjiga->artikal->formatiranaCijena = formatirajCijenu($knjiga->artikal->cijena);
+            $knjiga->artikal->formatiranaAkcijskaCijena = $knjiga->artikal->akcijska_cijena ? formatirajCijenu($knjiga->artikal->akcijska_cijena) : null;
+            $knjiga->artikal->kratkiOpis = Str::words($knjiga->artikal->opis, 35);
+        }
+
         // Uzima prvu knjigu sa artiklom i slikom artikla
         $knjigaGodine = Knjiga::with(['artikal.artikalSlike'])->where('artikal_id', 4)->first();
-
         $formatiranaCijena = formatirajCijenu($knjigaGodine->artikal->cijena);
         $formatiranaAkcijskaCijena = formatirajCijenu($knjigaGodine->artikal->akcijska_cijena);
-
         $opis = Str::words($knjigaGodine->artikal->opis, 130);
 
-        return view('index', compact('knjigaGodine', 'formatiranaCijena', 'formatiranaAkcijskaCijena', 'opis'));
+        return view('index', compact(
+            'knjigaGodine',
+            'formatiranaCijena',
+            'formatiranaAkcijskaCijena',
+            'opis',
+            'preporuceneKnjige'
+        ));
     }
 
     public function listaKnjiga(Request $request, $vrstaArtikla = null)
     {
         if ($vrstaArtikla) {
             // Trazi vrstu artikala po unesenom id-u
-            $vrstaArtikla = VrstaArtikala::where('id', $vrstaArtikla)->firstOrFail();
+            $vrstaArtikla = VrstaArtikala::findOrFail($vrstaArtikla);
 
             // Trazi knjige koje su artiklom povezane sa vrstom artikla
-            $knjige = Knjiga::whereHas('artikal.vrsteArtikla', function ($query) use ($vrstaArtikla) {
-                $query->where('vrsta_artikalas.id', $vrstaArtikla->id);
-            })->with('artikal.artikalSlike')->simplePaginate(8);
+            // i dje artikal nije soft-deleted
+            $knjige = Knjiga::whereHas('artikal', function ($query) {
+                $query->whereNull('deleted_at');
+            })
+                ->whereNull('knjigas.deleted_at')
+                ->whereHas('artikal.vrsteArtikla', function ($query) use ($vrstaArtikla) {
+                    $query->where('vrsta_artikalas.id', $vrstaArtikla->id);
+                })
+                ->with('artikal.artikalSlike')
+                ->simplePaginate(8);
         } else {
-            $knjige = Knjiga::with('artikal.artikalSlike')->simplePaginate(8);
+            // Trazi knjige ciji artikal nije soft-deleted
+            $knjige = Knjiga::whereHas('artikal', function ($query) {
+                $query->whereNull('deleted_at');
+            })
+                ->whereNull('knjigas.deleted_at')
+                ->with('artikal.artikalSlike')
+                ->simplePaginate(8);
         }
 
         foreach ($knjige as $knjiga) {
             $knjiga->artikal->formatiranaCijena = formatirajCijenu($knjiga->artikal->cijena);
             $knjiga->artikal->formatiranaAkcijskaCijena = formatirajCijenu($knjiga->artikal->akcijska_cijena);
-
             $knjiga->artikal->kratkiOpis = Str::words($knjiga->artikal->opis, 35);
         }
 
         return view('knjige.index', compact('knjige', 'vrstaArtikla'));
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
     }
 
     public function show($artikal_id)

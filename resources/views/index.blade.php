@@ -13,15 +13,15 @@
             <div class="relative overflow-hidden">
                 <!-- Carousel Inner -->
                 <div class="flex transition-transform duration-700 ease-in-out transform" id="carousel-inner">
-                    <x-slide src="{{ asset('img/prva-slika.jpg') }}" alt="{{ __('Slajd 1') }}"
+                    <x-slide src="{{ asset('storage/img/prva-slika.jpg') }}" alt="{{ __('Slajd 1') }}"
                         citat="{{ __('Neki citat iz knjige') }}" autor="{{ __('Ime autora') }}"
                         naziv="{{ __('Naziv knjige') }}" />
 
-                    <x-slide src="{{ asset('img/prva-slika.jpg') }}" alt="{{ __('Slajd 1') }}"
+                    <x-slide src="{{ asset('storage/img/prva-slika.jpg') }}" alt="{{ __('Slajd 1') }}"
                         citat="{{ __('Neki citat iz knjige') }}" autor="{{ __('Ime autora') }}"
                         naziv="{{ __('Naziv knjige') }}" />
 
-                    <x-slide src="{{ asset('img/prva-slika.jpg') }}" alt="{{ __('Slajd 1') }}"
+                    <x-slide src="{{ asset('storage/img/prva-slika.jpg') }}" alt="{{ __('Slajd 1') }}"
                         citat="{{ __('Neki citat iz knjige') }}" autor="{{ __('Ime autora') }}"
                         naziv="{{ __('Naziv knjige') }}" />
                 </div>
@@ -42,31 +42,80 @@
     {{-- Kraj Slajdera --}}
     {{-- Preporuceno --}}
     <section class="section preporuceno py-12">
-        <div class="container mx-auto">
+        <div class="container mx-auto px-3">
             <div class="flex justify-center mb-10">
                 <x-naslov-sekcije>{{ __('Preporučujemo') }}</x-naslov-sekcije>
             </div>
+
+            <!-- Kartice -->
+            <div class="flex flex-wrap -mx-3 text-naslov">
+                @foreach ($preporuceneKnjige as $knjiga)
+                    <!-- Card -->
+                    <div class="w-full sm:w-1/2 md:w-1/2 lg:w-1/3 xl:w-1/4 mb-4 px-3 relative">
+                        <!-- Card Container -->
+                        <div class="bg-white shadow-lg rounded-lg overflow-hidden flex flex-col h-full relative z-0">
+                            <!-- Image Section -->
+                            @if ($knjiga->artikal->artikalSlike->isNotEmpty())
+                                <img src="{{ asset('storage/img/' . $knjiga->artikal->artikalSlike->first()->naziv_fajla) }}"
+                                    class="w-full h-72 object-contain" alt="{{ $knjiga->artikal->naziv }}">
+                            @else
+                                <img src="{{ asset('storage/img/fajl-nije-pronadjen.png') }}"
+                                    class="w-full h-72 object-contain" alt="{{ __('Fajl nije pronađen') }}">
+                            @endif
+
+                            <!-- Book Information Section -->
+                            <div class="p-4 flex-grow">
+                                <h5 class="text-lg font-bold text-center">{{ $knjiga->artikal->naziv }}</h5>
+                                <p class="text-tekst mt-2">
+                                    {{ $knjiga->artikal->kratkiOpis }}
+                                </p>
+                            </div>
+
+                            <!-- Price and Add to Cart Section -->
+                            <div class="mt-auto px-4 pb-4 relative z-10">
+                                <div
+                                    class="flex justify-between items-center space-y-4 sm:space-y-0 flex-col sm:flex-row">
+                                    <!-- Price Display -->
+                                    <div class="flex items-center text-lg mb-4 sm:mb-0">
+                                        <i class="fa-solid fa-tag text-sm text-tekst mr-1"></i>
+                                        @if ($knjiga->artikal->formatiranaAkcijskaCijena)
+                                            <!-- Original Price with Strikethrough -->
+                                            <span class="text-xl font-semibold text-red-600 line-through mr-2">
+                                                {{ $knjiga->artikal->formatiranaCijena }}
+                                            </span>
+                                            <!-- Discounted Price -->
+                                            <span class="text-xl font-bold text-naslov">
+                                                {{ $knjiga->artikal->formatiranaAkcijskaCijena }}
+                                            </span>
+                                        @else
+                                            <!-- Regular Price -->
+                                            <span class="text-xl font-bold">
+                                                {{ $knjiga->artikal->formatiranaCijena }}
+                                            </span>
+                                        @endif
+                                        <span class="ml-1 text-sm font-semibold text-tekst">EUR</span>
+                                    </div>
+                                    <!-- Add To Cart Link -->
+                                    <div class="w-full sm:w-auto">
+                                        <a href="" data-artikal-id="{{ $knjiga->artikal->id }}"
+                                            class="add-to-cart bg-green-500 text-white text-xl hover:bg-green-600 transition w-full px-4 py-2 rounded-lg flex items-center justify-center"
+                                            aria-label="{{ __('Dodaj u korpu') }}">
+                                            <i class="fa-solid fa-cart-plus text-lg mr-2" aria-hidden="true"></i>
+                                            <span class="text-lg">{{ __('Dodaj') }}</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Clickable Overlay -->
+                            <a href="/knjige/knjiga/{{ $knjiga->artikal_id }}" class="absolute inset-0 z-0"></a>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+            <!-- Kraj Kartica -->
         </div>
-        <!-- Kartice -->
-        <div class="flex flex-wrap justify-between mx-3">
-            <x-preporucujemo-card src="{{ asset('img/card.jpg') }}" alt="{{ __('Knjiga') }}"
-                naslov="{{ __('Naslov knjige') }}"
-                opis="{{ __('This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.') }}"
-                knjigaLink="#" cijena="1500,00" valuta="EUR" />
-            <x-preporucujemo-card src="{{ asset('img/card.jpg') }}" alt="{{ __('Knjiga') }}"
-                naslov="{{ __('Naslov knjige') }}"
-                opis="{{ __('This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.') }}"
-                knjigaLink="#" cijena="1500,00" valuta="EUR" />
-            <x-preporucujemo-card src="{{ asset('img/card.jpg') }}" alt="{{ __('Knjiga') }}"
-                naslov="{{ __('Naslov knjige') }}"
-                opis="{{ __('This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.') }}"
-                knjigaLink="#" cijena="1500,00" valuta="EUR" />
-            <x-preporucujemo-card src="{{ asset('img/card.jpg') }}" alt="{{ __('Knjiga') }}"
-                naslov="{{ __('Naslov knjige') }}"
-                opis="{{ __('This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.') }}"
-                knjigaLink="#" cijena="1500,00" valuta="EUR" />
-        </div>
-        <!-- Kraj kartica -->
+
     </section>
     {{-- Kraj Preporuceno --}}
     {{-- Knjiga godine  --}}
@@ -91,15 +140,15 @@
                                 <span class="ml-2 text-sm font-bold text-gray-500 uppercase">{{ __('EUR') }}</span>
                                 <br>
                                 <span
-                                    class="text-3xl font-black text-red-500 cijena-knjigaGodine">{{ $formatiranaAkcijskaCijena }}</span>
+                                    class="text-3xl font-black text-red-700 cijena-knjigaGodine">{{ $formatiranaAkcijskaCijena }}</span>
                                 <span
-                                    class="ml-2 text-xl uppercase font-extrabold text-red-500">{{ __('EUR') }}</span>
+                                    class="ml-2 text-xl uppercase font-extrabold text-red-700">{{ __('EUR') }}</span>
                             @else
                                 <!-- Display Regular Price -->
                                 <span
-                                    class="text-3xl font-black text-red-500 cijena-knjigaGodine">{{ $formatiranaCijena }}</span>
+                                    class="text-3xl font-black text-red-700 cijena-knjigaGodine">{{ $formatiranaCijena }}</span>
                                 <span
-                                    class="ml-2 text-xl uppercase font-extrabold text-red-500">{{ __('EUR') }}</span>
+                                    class="ml-2 text-xl uppercase font-extrabold text-red-700">{{ __('EUR') }}</span>
                             @endif
                         </p>
                     </div>
@@ -114,11 +163,12 @@
                     <a href="knjige/knjiga/{{ $knjigaGodine->artikal_id }}">
                         @if ($knjigaGodine->artikal->artikalSlike->isNotEmpty())
                             <img class="knjigaGodine-img object-cover w-full h-auto"
-                                src="{{ 'img/' . $knjigaGodine->artikal->artikalSlike->first()->naziv_fajla }}"
+                                src="{{ 'storage/img/' . $knjigaGodine->artikal->artikalSlike->first()->naziv_fajla }}"
                                 alt="{{ __('Knjiga godine') }}">
                         @else
                             <img class="knjigaGodine-img object-cover w-full h-auto"
-                                src="{{ asset('img/fajl-nije-pronadjen.png') }}" alt="{{ __('Knjiga godine') }}">
+                                src="{{ asset('storage/img/fajl-nije-pronadjen.png') }}"
+                                alt="{{ __('Knjiga godine') }}">
                         @endif
                     </a>
                 </figure>

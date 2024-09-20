@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Gate;
+use App\Models\User;
 use App\Http\Middleware\CheckDeliveryStep;
 use App\Services\CartService;
 use Illuminate\Support\ServiceProvider;
@@ -12,6 +14,8 @@ use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Porudzbina;
 use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\AccessAdmin;
+use App\Http\Middleware\CheckRole;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -28,6 +32,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Middleware za provjeru ovlascenja korisnika
+        Route::aliasMiddleware('checkRole', CheckRole::class);
+
+        // Definicija 'access-admin' Gate-a
+        Gate::define('access-admin', function (User $user) {
+            // Da li je instanca korisnika Menadzer/Administrator
+            return in_array($user->ovlascenje, ['Menadzer', 'Administrator']);
+        });
+
         VerifyEmail::toMailUsing(function (object $notifiable, string $url) {
             return (new MailMessage)
                 ->subject('Verifikacija Email Adrese')

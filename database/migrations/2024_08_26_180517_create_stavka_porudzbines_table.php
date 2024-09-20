@@ -16,7 +16,7 @@ return new class extends Migration {
             $table->id();
             $table->integer('kolicina');
             $table->integer('ukupna_cijena');
-            $table->foreignIdFor(Artikal::class)->constrained()->onDelete('cascade');
+            $table->foreignIdFor(Artikal::class)->nullable()->constrained()->onDelete('set null');
             $table->foreignIdFor(Porudzbina::class)->constrained()->onDelete('cascade');
             $table->timestamps();
         });

@@ -56,7 +56,6 @@
                                 @csrf
 
                                 <div class="grid grid-cols-1 gap-6">
-                                    <!-- Cardholder Name -->
                                     <div>
                                         <label for="cardholder-name" class="block text-sm font-medium">
                                             {{ __('Ime na kartici') }}
@@ -66,7 +65,6 @@
                                             placeholder="{{ __('Unesite ime i prezime') }}">
                                     </div>
 
-                                    <!-- Card Number with FontAwesome Icon -->
                                     <div>
                                         <label for="card-number-element" class="block text-sm font-medium">
                                             {{ __('Broj kartice') }}
@@ -147,11 +145,9 @@
     <script src="https://js.stripe.com/v3/"></script>
 
     <script>
-        // Initialize Stripe
         var stripe = Stripe('{{ $stripeKey }}');
         var elements = stripe.elements();
 
-        // Custom styling for the Elements
         var style = {
             base: {
                 color: '#32325d',
@@ -168,7 +164,6 @@
             }
         };
 
-        // Create individual Elements
         var cardNumber = elements.create('cardNumber', {
             style: style,
             placeholder: '{{ __('Unesite broj kartice') }}'
@@ -187,7 +182,6 @@
         });
         cardCvc.mount('#card-cvc-element');
 
-        // Handle real-time validation errors
         var errorElement = document.getElementById('card-errors');
 
         [cardNumber, cardExpiry, cardCvc].forEach(function(element) {
@@ -230,7 +224,6 @@
 
 
 
-        // Apply focus and blur event handlers to Stripe Elements to add outline
         function setFocusStyles(element, containerId) {
             element.on('focus', function() {
                 document.getElementById(containerId).classList.add('ring', 'ring-indigo-500', 'border-indigo-500');
@@ -245,7 +238,6 @@
         setFocusStyles(cardExpiry, 'card-expiry-element');
         setFocusStyles(cardCvc, 'card-cvc-element');
 
-        // Handle form submission
         var form = document.getElementById('payment-form');
         var submitButton = document.getElementById('submit-button');
         var spinner = document.getElementById('spinner');

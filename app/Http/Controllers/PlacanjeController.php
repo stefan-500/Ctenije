@@ -59,7 +59,7 @@ class PlacanjeController extends Controller
         \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
 
         try {
-            $intent = \Stripe\PaymentIntent::retrieve($paymentIntentId);
+            $intent = PaymentIntent::retrieve($paymentIntentId);
 
             if ($intent->status == 'succeeded') {
                 if (Auth::check()) {
