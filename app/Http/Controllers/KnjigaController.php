@@ -34,9 +34,15 @@ class KnjigaController extends Controller
 
         // Uzima prvu knjigu sa artiklom i slikom artikla
         $knjigaGodine = Knjiga::with(['artikal.artikalSlike'])->where('artikal_id', 4)->first();
-        $formatiranaCijena = formatirajCijenu($knjigaGodine->artikal->cijena);
-        $formatiranaAkcijskaCijena = formatirajCijenu($knjigaGodine->artikal->akcijska_cijena);
-        $opis = Str::words($knjigaGodine->artikal->opis, 130);
+        $formatiranaCijena = null;
+        $formatiranaAkcijskaCijena = null;
+        $opis = null;
+
+        if ($knjigaGodine && $knjigaGodine->artikal) {
+            $formatiranaCijena = formatirajCijenu($knjigaGodine->artikal->cijena);
+            $formatiranaAkcijskaCijena = formatirajCijenu($knjigaGodine->artikal->akcijska_cijena);
+            $opis = Str::words($knjigaGodine->artikal->opis, 130);
+        }
 
         return view('index', compact(
             'knjigaGodine',
