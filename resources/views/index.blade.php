@@ -119,6 +119,7 @@
     </section>
     {{-- Kraj Preporuceno --}}
     {{-- Knjiga godine  --}}
+    @if ($knjigaGodine && $knjigaGodine->artikal)
     <section class="knjigaGodine py-12 px-4">
         <div class="flex flex-wrap">
             <!-- Left Column -->
@@ -175,6 +176,7 @@
             </div>
         </div>
     </section>
+    @endif
 
     {{-- Kraj knjige godine --}}
     {{-- Kontakt forma --}}
