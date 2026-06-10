@@ -23,11 +23,12 @@ class PlacanjeController extends Controller
                 ->with('stavkePorudzbine.artikal')
                 ->firstOrFail();
 
+            // Recalculate before creating the payment intent. Client totals are ignored.
             $discountService->recalculateOrder($porudzbina, Auth::user()->email);
             $porudzbina->refresh()->load('stavkePorudzbine.artikal');
             $paymentToken = null; // Prijavljeni korisnik ne koristi payment_token
         } else {
-            //Neprijavljeni korisnik
+            // Guest
 
             $paymentToken = request()->query('payment_token');
 
@@ -41,10 +42,12 @@ class PlacanjeController extends Controller
                 ->with('stavkePorudzbine.artikal', 'guestDeliveryData')
                 ->firstOrFail();
 
+            // Guest checkout can now enforce per-email limits using saved delivery data.
             $discountService->recalculateOrder($porudzbina, $porudzbina->guestDeliveryData?->email);
             $porudzbina->refresh()->load('stavkePorudzbine.artikal', 'guestDeliveryData');
         }
 
+        // Stripe receives only the server-recalculated final amount.
         $paymentIntent = app(StripePaymentService::class)->createPaymentIntent($porudzbina->ukupno);
 
         return view('placanje.placanje-form', [
@@ -90,6 +93,7 @@ class PlacanjeController extends Controller
                 }
 
                 DB::transaction(function () use ($porudzbina, $intent, $discountService, $customerEmail, $customerId) {
+                    // Finalize against fresh totals so expired or overused codes cannot be redeemed.
                     $discountService->recalculateOrder($porudzbina, $customerEmail);
                     $porudzbina->refresh()->load('stavkePorudzbine.artikal');
 
@@ -107,6 +111,7 @@ class PlacanjeController extends Controller
                     }
 
                     $porudzbina->save();
+                    // Usage is consumed only after the order is marked as finalized.
                     $discountService->redeem($porudzbina->refresh(), $customerEmail, $customerId);
                 });
 

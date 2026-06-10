@@ -36,6 +36,12 @@ class DiscountService
         return (int) $porudzbina->stavkePorudzbine->sum('ukupna_cijena');
     }
 
+    /**
+     * Resolve a submitted code and validate it against the current server-side subtotal.
+     *
+     * Email is optional because guest carts do not know the customer email until
+     * delivery data is submitted. When present, it enables per-email limits.
+     */
     public function findValidCode(string $code, int $subtotal, ?string $email = null): DiscountCode
     {
         $normalizedCode = $this->normalizeCode($code);
@@ -52,6 +58,12 @@ class DiscountService
         return $discountCode;
     }
 
+    /**
+     * Enforce all rules that can make a code unusable at this moment.
+     *
+     * The same checks run during cart application, cart/order recalculation,
+     * checkout, and redemption so stale cart state can't bypass limits.
+     */
     public function assertValid(DiscountCode $discountCode, int $subtotal, ?string $email = null): void
     {
         $email = $this->normalizeEmail($email);
@@ -78,6 +90,7 @@ class DiscountService
         }
 
         if ($email && $discountCode->max_uses_per_email !== null) {
+            // Per-email limits count completed redemptions, not cart applications.
             $usesByEmail = DiscountCodeRedemption::where('discount_code_id', $discountCode->id)
                 ->where('email', $email)
                 ->count();
@@ -88,6 +101,12 @@ class DiscountService
         }
     }
 
+    /**
+     * Calculate the integer discount amount for the current subtotal.
+     *
+     * Fixed discounts are clamped to the subtotal so the payable total can't
+     * become negative.
+     */
     public function calculateDiscount(DiscountCode $discountCode, int $subtotal): int
     {
         if ($subtotal <= 0) {
@@ -101,6 +120,11 @@ class DiscountService
         return max(0, min($subtotal, $discount));
     }
 
+    /**
+     * Return the canonical pricing shape used by cart, checkout, and views.
+     *
+     * All monetary values are integer values (EUR cents).
+     */
     public function totals(?DiscountCode $discountCode, int $subtotal): array
     {
         $discountAmount = $discountCode ? $this->calculateDiscount($discountCode, $subtotal) : 0;
@@ -112,6 +136,12 @@ class DiscountService
         ];
     }
 
+    /**
+     * Build historical order snapshot fields from the current discount definition.
+     *
+     * Orders store code text, type, value, and calculated amount so later edits to
+     * discount_codes do not rewrite past order totals.
+     */
     public function discountSnapshot(DiscountCode $discountCode, int $subtotal): array
     {
         $totals = $this->totals($discountCode, $subtotal);
@@ -159,6 +189,12 @@ class DiscountService
         session()->forget('discount');
     }
 
+    /**
+     * Recalculate guest cart totals from session items and remove stale discounts.
+     *
+     * Session data only stores the selected discount identity. Prices and totals
+     * are always recomputed server-side.
+     */
     public function recalculateSession(array $cart, ?string $email = null): array
     {
         $subtotal = $this->cartSubtotal($cart);
@@ -199,6 +235,9 @@ class DiscountService
         ];
     }
 
+    /**
+     * Persist a valid discount snapshot on an authenticated user's open order.
+     */
     public function applyToOrder(Porudzbina $porudzbina, string $code, ?string $email = null): Porudzbina
     {
         $subtotal = $this->orderSubtotal($porudzbina);
@@ -222,6 +261,12 @@ class DiscountService
         return $porudzbina->refresh();
     }
 
+    /**
+     * Recalculate an order from its stored line items and current discount rules.
+     *
+     * This runs before checkout/payment so client-provided totals or stale cart
+     * displays can't determine the amount sent to Stripe.
+     */
     public function recalculateOrder(Porudzbina $porudzbina, ?string $email = null): array
     {
         $subtotal = $this->orderSubtotal($porudzbina);
@@ -278,6 +323,9 @@ class DiscountService
         ];
     }
 
+    /**
+     * Convert a guest session discount into an order snapshot after delivery data exists.
+     */
     public function persistSessionDiscountToOrder(Porudzbina $porudzbina, ?string $email = null): Porudzbina
     {
         $discount = session()->get('discount');
@@ -289,6 +337,13 @@ class DiscountService
         return $this->applyToOrder($porudzbina, $discount['discount_code'], $email);
     }
 
+    /**
+     * Record the audit trail for a discount after the payment flow finalizes the order.
+     *
+     * Applying a code to cart/order does not consume usage. Redemption is delayed
+     * until the order is finalized, then guarded by a row lock to keep uses_count
+     * and redemption rows consistent under concurrent checkouts.
+     */
     public function redeem(Porudzbina $porudzbina, ?string $email, ?int $userId = null): void
     {
         if (!$porudzbina->discount_code_id || !$porudzbina->discount_code || (int) $porudzbina->discount_amount <= 0) {

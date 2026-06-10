@@ -32,6 +32,8 @@ class PorudzbinaController extends Controller
 
             // Ako nema trenutne porudzbine cart ce biti prazan niz
             $stavkePorudzbine = $porudzbina ? $porudzbina->stavkePorudzbine : collect();
+
+            // Recalculate from stored line items on page load so displayed totals can't go stale.
             $cartTotals = $porudzbina
                 ? $discountService->recalculateOrder($porudzbina, Auth::user()->email)
                 : $discountService->totals(null, 0);
@@ -46,6 +48,7 @@ class PorudzbinaController extends Controller
         } else {
             // Ukupna cijena porudzbine se obracunava pomocu stavci iz sesije.
             $stavkePorudzbine = session()->get('cart', []);
+            // Guest carts keep items in session, but totals are still derived server-side.
             $cartTotals = $discountService->recalculateSession($stavkePorudzbine);
 
             foreach ($stavkePorudzbine as &$stavka) {
@@ -118,12 +121,12 @@ class PorudzbinaController extends Controller
                 $stavkaPorudzbine->save();
             }
 
+            // Quantity changes may invalidate minimum-order discounts, so refresh order totals.
             $discountService->recalculateOrder($porudzbina, Auth::user()->email);
-
             $cartCount = $porudzbina->stavkePorudzbine->sum('kolicina');
 
         } else {
-            // Korisnik nije prijavljen - podaci se cuvaju u sesiji
+            // Guest user - persist data to session
 
             $cart = session()->get('cart', []);
 
@@ -148,6 +151,7 @@ class PorudzbinaController extends Controller
 
             session()->put('cart', $cart);
             session()->put('cart_count', $cartCount);
+            // Keep any session discount aligned with the new cart subtotal.
             $discountService->recalculateSession($cart);
         }
 
@@ -192,6 +196,7 @@ class PorudzbinaController extends Controller
             // Ponovno ucitavanje stavki porudzbine zbog azuriranja stavke
             $porudzbina->load('stavkePorudzbine');
 
+            // Revalidate the discount after the line total changes.
             $cartTotals = $discountService->recalculateOrder($porudzbina, Auth::user()->email);
 
             $cartCount = $porudzbina->stavkePorudzbine->sum('kolicina');
@@ -211,6 +216,7 @@ class PorudzbinaController extends Controller
                 session()->put('cart', $cart);
             }
 
+            // Recalculate from session data. The client never supplies trusted totals.
             $cartTotals = $discountService->recalculateSession($cart);
             $cartCount = array_sum(array_column($cart, 'kolicina'));
             $stavka = $cart[$artikalId];
@@ -361,6 +367,7 @@ class PorudzbinaController extends Controller
                     ->with('stavkePorudzbine')
                     ->firstOrFail();
 
+                // Authenticated carts are already database orders, so store a snapshot.
                 $discountService->applyToOrder($porudzbina, $data['code'], Auth::user()->email);
                 $cartTotals = $discountService->recalculateOrder($porudzbina, Auth::user()->email);
             } else {
@@ -370,6 +377,7 @@ class PorudzbinaController extends Controller
                     return response()->json(['error' => __('Vaša korpa je prazna.')], 422);
                 }
 
+                // Guest discounts remain in session until delivery creates a real order.
                 $discountService->applyToSession($data['code'], $cart);
                 $cartTotals = $discountService->recalculateSession($cart);
             }
@@ -467,6 +475,7 @@ class PorudzbinaController extends Controller
                 return redirect('/cart')->with('error', __('Nema aktivne porudžbine.'));
             }
 
+            // Revalidate before moving to payment.
             $discountService->recalculateOrder($porudzbina, Auth::user()->email);
 
             return redirect('/placanje');
@@ -524,6 +533,7 @@ class PorudzbinaController extends Controller
             // Zbog pronalazenja trenutne porudzbine neprijavljenog korisnika
             $paymentToken = Str::random(64);
 
+            // Email is available now, so per-email limits can be enforced for guest carts.
             $cartTotals = $discountService->recalculateSession($cart, $data['email']);
 
             // Cuvanje porudzbine 
@@ -548,6 +558,7 @@ class PorudzbinaController extends Controller
                 ]);
             }
 
+            // Persist historical discount fields on the order after line items exist.
             $discountService->persistSessionDiscountToOrder($porudzbina, $data['email']);
 
             // Brisanje cart sesije

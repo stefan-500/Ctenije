@@ -49,6 +49,7 @@
         window.addEventListener('pageshow', updateCartCount);
 
         function updateCartTotals(data) {
+            // The server is the source of truth for subtotal, discount, and payable total.
             if (data.subtotal && document.querySelector('#cart-subtotal')) {
                 document.querySelector('#cart-subtotal').textContent = data.subtotal;
             }
@@ -103,6 +104,7 @@
                     return response.json();
                 })
                 .then(data => {
+                    // Applying a code may affect all totals, not just the discount row.
                     updateCartTotals(data);
                     message.textContent = data.message || '';
                     message.classList.remove('text-red-600');
@@ -130,6 +132,7 @@
                 })
                 .then(response => response.json())
                 .then(data => {
+                    // Removing a code restores the server-calculated undiscounted total.
                     updateCartTotals(data);
                     message.textContent = data.message || '';
                     message.classList.remove('text-red-600');
@@ -163,6 +166,7 @@
                 })
                 .then(data => {
                     document.querySelector(`#stavka-total-${artikalId}`).textContent = data.stavka_ukupna_cijena;
+                    // Quantity changes can invalidate or resize the current discount.
                     updateCartTotals(data);
                     document.getElementById('cart-count').textContent = data.cart_count;
                 })
@@ -213,6 +217,7 @@
                     .then(response => response.json())
                     .then(data => {
                         document.querySelector(`#stavka-row-${artikalId}`).remove();
+                        // Removing an item can invalidate minimum-order discounts.
                         updateCartTotals(data);
                         document.getElementById('cart-count').textContent = data.cart_count;
         
