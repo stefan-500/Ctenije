@@ -32,6 +32,7 @@ In the administration part of the system, the following actions are enabled:
 - Adding, editing and deleting items
 - Viewing all orders
 - Viewing order details
+- Managing discount codes
 
 ## Applied Technologies
 These are the tehcnologies which were used for the development of this web application:
@@ -94,8 +95,10 @@ V1 discount-code support is implemented for the shopping cart and checkout flow.
 - Discounts apply to the whole order.
 - Only one discount code can be applied to an order at a time.
 - Codes can be percentage-based or fixed-amount discounts.
-- Codes are created through seeders or manual database records in V1; there is no admin/manager CRUD frontend yet.
+- Codes can be created through seeders/manual database records or managed by administrators and managers in the admin UI.
 - Codes support active/inactive state, optional start and expiration dates, minimum order totals, global usage limits, and per-email usage limits.
+- Admin/manager users can create, edit, view, and toggle the active status of discount codes at `/admin/popusti/index`.
+- Start and expiration dates are entered and displayed as Europe/Belgrade local time in 24-hour format (`dd.mm.yyyy. HH:mm`).
 - Guest carts store the selected code in the session until delivery data creates the order.
 - Orders persist discount snapshot fields (`subtotal`, `discount_code_id`, `discount_code`, `discount_type`, `discount_value`, `discount_amount`, and final `ukupno`) so historical totals do not change if a discount code is edited later.
 - Successful finalized orders create `discount_code_redemptions` audit records and increment `uses_count`; applying a code to the cart does not consume usage.
@@ -120,7 +123,7 @@ Example seeded codes:
 - `EMAIL1` - per-email usage-limit example
 
 To try the feature locally, add a book to the cart, enter one of the active codes in the discount-code field, and continue through delivery and payment.  
-Admin CRUD for discount-code management is planned for a future version.
+To manage codes locally, log in as an Administrator or Manager and open `/admin/popusti/index`.
 
 ## Next improvements
 These are some possible new functionalities and improvements which should be implemented next:
@@ -130,7 +133,6 @@ These are some possible new functionalities and improvements which should be imp
 - Author and Publisher pages
 - View books by author, publisher, popularity, and price
 - Search by entering the book name
-- Admin/manager CRUD for discount-code management
 - Multiple payment methods
 - Book rating
 - Comments

@@ -123,6 +123,34 @@
                 </ul>
             </li>
 
+            <!-- Popusti -->
+            <li>
+                <button @click="activeMenu === 'popusti' ? activeMenu = null : activeMenu = 'popusti'"
+                    class="w-full flex items-center justify-between py-2.5 px-4 rounded transition duration-200 hover:bg-gray-700 focus:outline-none">
+                    <div class="flex items-center">
+                        <i class="fa-solid fa-tags mr-3"></i>
+                        <span>{{ __('Popusti') }}</span>
+                    </div>
+                    <i :class="activeMenu === 'popusti' ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'"></i>
+                </button>
+                <ul x-show="activeMenu === 'popusti'" x-transition class="pl-6">
+                    <li>
+                        <a href="{{ url('/admin/popusti/index') }}"
+                            class="block py-2 px-4 rounded transition duration-200 hover:bg-gray-700
+                           {{ request()->is('admin/popusti/index') ? 'bg-gray-700' : '' }}">
+                            {{ __('Svi kodovi') }}
+                        </a>
+                    </li>
+                    <li>
+                        <a href="{{ url('/admin/popusti/dodaj') }}"
+                            class="block py-2 px-4 rounded transition duration-200 hover:bg-gray-700
+                           {{ request()->is('admin/popusti/dodaj') ? 'bg-gray-700' : '' }}">
+                            {{ __('Dodaj kod') }}
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
         </ul>
     </nav>
 </div>
