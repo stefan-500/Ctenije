@@ -149,6 +149,70 @@ it('rejects invalid discount code values', function () {
         ->assertSessionHasErrors('value');
 });
 
+it('validates max uses per email limits on create and update', function () {
+    $admin = discountManagementAdminUser();
+
+    foreach (['101010', '101', '0', '-1', '1.5', 'abc'] as $invalidLimit) {
+        $this->actingAs($admin)
+            ->post('/admin/popusti/dodaj', [
+                'code' => 'EMAILLIMIT' . preg_replace('/[^A-Z0-9]/', '', strtoupper($invalidLimit)),
+                'type' => 'percent',
+                'value' => '10',
+                'is_active' => '1',
+                'max_uses_per_email' => $invalidLimit,
+            ])
+            ->assertSessionHasErrors('max_uses_per_email');
+    }
+
+    $this->actingAs($admin)
+        ->post('/admin/popusti/dodaj', [
+            'code' => 'EMAILTOOHIGH',
+            'type' => 'percent',
+            'value' => '10',
+            'is_active' => '1',
+            'max_uses_per_email' => '101',
+        ])
+        ->assertSessionHasErrors([
+            'max_uses_per_email' => 'Maksimalni broj korištenja po email adresi ne moze biti veci od 100.',
+        ]);
+
+    $this->actingAs($admin)
+        ->post('/admin/popusti/dodaj', [
+            'code' => 'EMAILVALID',
+            'type' => 'percent',
+            'value' => '10',
+            'is_active' => '1',
+            'max_uses_per_email' => '100',
+        ])
+        ->assertRedirect('/admin/popusti/index');
+
+    $discountCode = DiscountCode::where('code', 'EMAILVALID')->firstOrFail();
+
+    expect($discountCode->max_uses_per_email)->toBe(100);
+
+    $this->actingAs($admin)
+        ->put('/admin/popusti/izmijeni/' . $discountCode->id, [
+            'code' => 'EMAILVALID',
+            'type' => 'percent',
+            'value' => '10',
+            'is_active' => '1',
+            'max_uses_per_email' => '101',
+        ])
+        ->assertSessionHasErrors('max_uses_per_email');
+
+    $this->actingAs($admin)
+        ->put('/admin/popusti/izmijeni/' . $discountCode->id, [
+            'code' => 'EMAILVALID',
+            'type' => 'percent',
+            'value' => '10',
+            'is_active' => '1',
+            'max_uses_per_email' => '25',
+        ])
+        ->assertRedirect('/admin/popusti/index');
+
+    expect($discountCode->fresh()->max_uses_per_email)->toBe(25);
+});
+
 it('toggles discount codes enabled and disabled', function () {
     $discountCode = DiscountCode::factory()->create(['is_active' => true]);
 

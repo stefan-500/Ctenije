@@ -41,7 +41,7 @@ class StoreDiscountCodeRequest extends FormRequest
             'expires_at' => ['nullable', 'date', 'after:starts_at'],
             'minimum_order_total' => ['nullable', 'numeric', 'min:0.01'],
             'max_uses' => ['nullable', 'integer', 'min:1'],
-            'max_uses_per_email' => ['nullable', 'integer', 'min:1'],
+            'max_uses_per_email' => ['nullable', 'integer', 'min:1', 'max:100'],
         ];
     }
 
@@ -80,8 +80,9 @@ class StoreDiscountCodeRequest extends FormRequest
             'minimum_order_total.min' => 'Minimalni iznos porudzbine mora biti najmanje 0.01 EUR.',
             'max_uses.integer' => 'Globalni limit mora biti cijeli broj.',
             'max_uses.min' => 'Globalni limit mora biti najmanje 1.',
-            'max_uses_per_email.integer' => 'Limit po email adresi mora biti cijeli broj.',
-            'max_uses_per_email.min' => 'Limit po email adresi mora biti najmanje 1.',
+            'max_uses_per_email.integer' => 'Vrijednost mora biti biti cijeli broj.',
+            'max_uses_per_email.min' => 'Najmanji broj korištenja po email adresi je 1.',
+            'max_uses_per_email.max' => 'Najveći broj korištenja po email adresi je 100.',
         ];
     }
 
