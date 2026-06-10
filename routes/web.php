@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\KnjigaController;
+use App\Http\Controllers\Admin\DiscountCodeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PorudzbinaController;
 use Illuminate\Support\Facades\Route;
@@ -51,6 +52,15 @@ Route::middleware(['auth', 'checkRole:Administrator,Menadzer'])->prefix('admin')
 
     Route::get('/porudzbine/index', [AdminController::class, 'svePorudzbine']);
     Route::get('/porudzbine/{porudzbina}', [AdminController::class, 'prikaziPorudzbinu']);
+
+    Route::get('/popusti/index', [DiscountCodeController::class, 'index']);
+    Route::get('/popusti/dodaj', [DiscountCodeController::class, 'create']);
+    Route::post('/popusti/dodaj', [DiscountCodeController::class, 'store']);
+    Route::get('/popusti/izmijeni/{discountCode}', [DiscountCodeController::class, 'edit']);
+    Route::put('/popusti/izmijeni/{discountCode}', [DiscountCodeController::class, 'update']);
+    Route::patch('/popusti/{discountCode}/toggle', [DiscountCodeController::class, 'toggle']);
+    Route::delete('/popusti/{discountCode}', [DiscountCodeController::class, 'destroy']);
+    Route::get('/popusti/{discountCode}', [DiscountCodeController::class, 'show']);
 
     // Pristup samo Adminu
     Route::middleware(['checkRole:Administrator'])->group(function () {
