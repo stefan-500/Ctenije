@@ -33,6 +33,17 @@
                             </tbody>
                         </table>
 
+                        @if ($porudzbina->discount_code)
+                            <div class="flex justify-between items-center mt-6">
+                                <span class="text-lg font-medium ">{{ __('Međuzbir:') }}</span>
+                                <span class="text-lg font-bold">{{ formatirajCijenu($porudzbina->subtotal) }} EUR</span>
+                            </div>
+                            <div class="flex justify-between items-center mt-2">
+                                <span class="text-lg font-medium ">{{ __('Popust') }} ({{ $porudzbina->discount_code }}):</span>
+                                <span class="text-lg font-bold text-green-600">-{{ formatirajCijenu($porudzbina->discount_amount) }} EUR</span>
+                            </div>
+                        @endif
+
                         <div class="flex justify-between items-center mt-6">
                             <span class="text-lg font-medium ">{{ __('Ukupno za naplatu:') }}</span>
                             <span class="text-2xl font-bold text-green-600">{{ formatirajCijenu($porudzbina->ukupno) }}

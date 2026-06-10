@@ -7,21 +7,28 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Porudzbina;
 use Illuminate\Support\Facades\Mail;
-use Stripe\PaymentIntent;
+use App\Services\DiscountService;
+use App\Services\StripePaymentService;
+use Illuminate\Support\Facades\DB;
 
 class PlacanjeController extends Controller
 {
     public function prikazFormePlacanja()
     {
+        $discountService = app(DiscountService::class);
+
         if (Auth::check()) {
             $porudzbina = Porudzbina::where('user_id', Auth::id())
                 ->where('status', 'neobradjeno')
                 ->with('stavkePorudzbine.artikal')
                 ->firstOrFail();
 
+            // Recalculate before creating the payment intent. Client totals are ignored.
+            $discountService->recalculateOrder($porudzbina, Auth::user()->email);
+            $porudzbina->refresh()->load('stavkePorudzbine.artikal');
             $paymentToken = null; // Prijavljeni korisnik ne koristi payment_token
         } else {
-            //Neprijavljeni korisnik
+            // Guest
 
             $paymentToken = request()->query('payment_token');
 
@@ -34,14 +41,14 @@ class PlacanjeController extends Controller
                 ->where('status', 'neobradjeno')
                 ->with('stavkePorudzbine.artikal', 'guestDeliveryData')
                 ->firstOrFail();
+
+            // Guest checkout can now enforce per-email limits using saved delivery data.
+            $discountService->recalculateOrder($porudzbina, $porudzbina->guestDeliveryData?->email);
+            $porudzbina->refresh()->load('stavkePorudzbine.artikal', 'guestDeliveryData');
         }
 
-        \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
-
-        $paymentIntent = PaymentIntent::create([
-            'amount' => $porudzbina->ukupno,
-            'currency' => 'eur',
-        ]);
+        // Stripe receives only the server-recalculated final amount.
+        $paymentIntent = app(StripePaymentService::class)->createPaymentIntent($porudzbina->ukupno);
 
         return view('placanje.placanje-form', [
             'porudzbina' => $porudzbina,
@@ -55,19 +62,20 @@ class PlacanjeController extends Controller
     public function obradaPlacanja(Request $request)
     {
         $paymentIntentId = $request->payment_intent_id;
-
-        \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
+        $discountService = app(DiscountService::class);
 
         try {
-            $intent = PaymentIntent::retrieve($paymentIntentId);
+            $intent = app(StripePaymentService::class)->retrievePaymentIntent($paymentIntentId);
 
             if ($intent->status == 'succeeded') {
                 if (Auth::check()) {
                     // Prijavljeni korisnik
                     $porudzbina = Porudzbina::where('user_id', Auth::id())
                         ->where('status', 'neobradjeno')
-                        ->with('stavkePorudzbine.artikal')
+                        ->with('stavkePorudzbine.artikal', 'guestDeliveryData')
                         ->firstOrFail();
+                    $customerEmail = Auth::user()->email;
+                    $customerId = Auth::id();
                 } else {
                     // Neprijavljeni korisnik
                     $paymentToken = $request->payment_token;
@@ -78,27 +86,36 @@ class PlacanjeController extends Controller
 
                     $porudzbina = Porudzbina::where('payment_token', $paymentToken)
                         ->where('status', 'neobradjeno')
-                        ->with('stavkePorudzbine.artikal')
+                        ->with('stavkePorudzbine.artikal', 'guestDeliveryData')
                         ->firstOrFail();
+                    $customerEmail = $porudzbina->guestDeliveryData?->email;
+                    $customerId = null;
                 }
 
-                foreach ($porudzbina->stavkePorudzbine as $stavka) {
-                    //TODO potrebna provjera dostupne kolicine artikla jer vise korisnika moze poruciti istovremeno
+                DB::transaction(function () use ($porudzbina, $intent, $discountService, $customerEmail, $customerId) {
+                    // Finalize against fresh totals so expired or overused codes cannot be redeemed.
+                    $discountService->recalculateOrder($porudzbina, $customerEmail);
+                    $porudzbina->refresh()->load('stavkePorudzbine.artikal');
 
-                    // Umanjivanje dostupne kolicine artikla za porucenu kolicinu svake stavke porudzbine
-                    $stavka->artikal->dostupna_kolicina -= $stavka->kolicina;
-                    $stavka->artikal->save();
-                }
-                // Azuriranje statusa i cuvanje Stripe Intent ID
-                $porudzbina->status = 'zakljuceno';
-                $porudzbina->stripe_payment_intent_id = $intent->id; // ID transakcije
+                    foreach ($porudzbina->stavkePorudzbine as $stavka) {
+                        //TODO potrebna provjera dostupne kolicine artikla jer vise korisnika moze poruciti istovremeno
+                        $stavka->artikal->dostupna_kolicina -= $stavka->kolicina;
+                        $stavka->artikal->save();
+                    }
 
-                // Ponistavanje payment_token-a za neprijavljenog korisnika
-                if (!$porudzbina->user_id) {
-                    $porudzbina->payment_token = null;
-                }
+                    $porudzbina->status = 'zakljuceno';
+                    $porudzbina->stripe_payment_intent_id = $intent->id;
 
-                $porudzbina->save();
+                    if (!$porudzbina->user_id) {
+                        $porudzbina->payment_token = null;
+                    }
+
+                    $porudzbina->save();
+                    // Usage is consumed only after the order is marked as finalized.
+                    $discountService->redeem($porudzbina->refresh(), $customerEmail, $customerId);
+                });
+
+                $porudzbina->refresh()->load('stavkePorudzbine.artikal', 'guestDeliveryData', 'user');
 
                 // Slanje potvrde porudzbine mejlom
                 $primalac = Auth::check() ? Auth::user()->email : $porudzbina->guestDeliveryData->email;
@@ -163,12 +180,8 @@ class PlacanjeController extends Controller
         $paymentIntentId = $request->payment_intent_id;
         \Log::info('Received payment_intent_id for cancellation: ' . $paymentIntentId);
 
-        \Stripe\Stripe::setApiKey(config('services.stripe.secret'));
-
         try {
-            // Trazenje instance PaymentIntent-a
-            $paymentIntent = PaymentIntent::retrieve($paymentIntentId);
-            $paymentIntent->cancel();
+            app(StripePaymentService::class)->cancelPaymentIntent($paymentIntentId);
 
             session()->put('payment_canceled', true);
             session()->forget('payment_success');

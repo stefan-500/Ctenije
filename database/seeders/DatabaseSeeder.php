@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
             ArtikalSeeder::class,
             ArtikalSlikaSeeder::class,
             KnjigaSeeder::class,
+            DiscountCodeSeeder::class,
         ]);
 
         $korisnici = User::factory(10)->state(new Sequence(

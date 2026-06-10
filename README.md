@@ -15,6 +15,7 @@ The application provides all the basic functionalities that an online store shou
 - Viewing items in the shopping cart
 - Incrementing/decrementing shopping cart item quantity
 - Removing items from the shopping cart
+- Applying one whole-order discount code in the shopping cart
 - Entering delivery information
 - Entering payment information
 - Payment cancelation
@@ -86,6 +87,41 @@ These are some of the problems and challenges encountered during development:
 - When an **item** that is linked to an **order item** is deleted, that order item is also deleted.<br>
 **This is a common challenge in e-commerce development. By resolving this problem I learned about database table constraint variants, and Laravel's soft-deletion method**
 
+
+## Discount codes
+V1 discount-code support is implemented for the shopping cart and checkout flow.
+
+- Discounts apply to the whole order.
+- Only one discount code can be applied to an order at a time.
+- Codes can be percentage-based or fixed-amount discounts.
+- Codes are created through seeders or manual database records in V1; there is no admin/manager CRUD frontend yet.
+- Codes support active/inactive state, optional start and expiration dates, minimum order totals, global usage limits, and per-email usage limits.
+- Guest carts store the selected code in the session until delivery data creates the order.
+- Orders persist discount snapshot fields (`subtotal`, `discount_code_id`, `discount_code`, `discount_type`, `discount_value`, `discount_amount`, and final `ukupno`) so historical totals do not change if a discount code is edited later.
+- Successful finalized orders create `discount_code_redemptions` audit records and increment `uses_count`; applying a code to the cart does not consume usage.
+- Cart and checkout totals are recalculated server-side. Client-submitted totals or discount amounts are not trusted.
+
+### Local discount-code usage
+Run migrations and seeders:
+
+```bash
+php artisan migrate
+php artisan db:seed --class=DiscountCodeSeeder
+```
+
+Example seeded codes:
+
+- `USTEDI10` - valid 10% discount
+- `POPUST500` - valid fixed discount
+- `ISTEKAO5` - expired discount
+- `NEAKTIVAN20` - inactive discount
+- `MINIMUM3000` - minimum-order discount example
+- `LIMIT1` - global usage-limit example
+- `EMAIL1` - per-email usage-limit example
+
+To try the feature locally, add a book to the cart, enter one of the active codes in the discount-code field, and continue through delivery and payment.  
+Admin CRUD for discount-code management is planned for a future version.
+
 ## Next improvements
 These are some possible new functionalities and improvements which should be implemented next:
 
@@ -94,11 +130,10 @@ These are some possible new functionalities and improvements which should be imp
 - Author and Publisher pages
 - View books by author, publisher, popularity, and price
 - Search by entering the book name
-- Optional discount code entry in the shopping cart
+- Admin/manager CRUD for discount-code management
 - Multiple payment methods
 - Book rating
 - Comments
 
 ## License
 [MIT license](https://opensource.org/licenses/MIT).
-

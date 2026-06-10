@@ -28,6 +28,15 @@
                                 class="uppercase text-xs font-bold">eur</span>
                         </dd>
                     </div>
+                    @if ($porudzbina->discount_code)
+                        <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+                            <dt class="text-base">{{ __('Kod za popust') }}</dt>
+                            <dd class="mt-1 sm:mt-0 sm:col-span-2 font-semibold">
+                                {{ $porudzbina->discount_code }} (-{{ $porudzbina->discount_amount }} <span
+                                    class="uppercase text-xs font-bold">eur</span>)
+                            </dd>
+                        </div>
+                    @endif
                     <div class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                         <dt class="text-base">{{ __('Adresa isporuke') }}</dt>
                         <dd class="mt-1 sm:mt-0 sm:col-span-2 font-semibold">
@@ -102,6 +111,22 @@
                                     </tr>
                                 @endforeach
                                 {{-- Order Total --}}
+                                @if ($porudzbina->discount_code)
+                                    <tr>
+                                        <td colspan="3" class="px-6 py-4 whitespace-nowrap text-right font-bold text-lg">
+                                            {{ __('Međuzbir:') }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right font-bold text-lg">
+                                            {{ $porudzbina->subtotal }} <span
+                                                class="uppercase text-xs font-bold">eur</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3" class="px-6 py-4 whitespace-nowrap text-right font-bold text-lg">
+                                            {{ __('Popust') }} ({{ $porudzbina->discount_code }}):</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right font-bold text-lg text-green-700">
+                                            -{{ $porudzbina->discount_amount }} <span
+                                                class="uppercase text-xs font-bold">eur</span></td>
+                                    </tr>
+                                @endif
                                 <tr>
                                     <td colspan="3" class="px-6 py-4 whitespace-nowrap text-right font-bold text-xl">
                                         {{ __('Ukupno:') }}</td>

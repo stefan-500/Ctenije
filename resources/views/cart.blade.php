@@ -11,9 +11,6 @@
             class="flex flex-wrap justify-center lg:justify-between m-auto space-y-6 lg:space-y-0 text-tekst py-12 px-11 cart">
             <div class="w-full lg:w-8/12">
 
-                @php
-                    dump(session()->get('cart'));
-                @endphp
                 <div class="flex justify-center">
                     <div class="w-full lg:w-10/12">
                         <x-naslov-sekcije class="mb-4 mt-2">{{ __('Korpa') }}</x-naslov-sekcije>
@@ -54,7 +51,7 @@
                                                 </a>
                                             </div>
                                         </td>
-                                        <td id="stavka-total-{{ Auth::check() ? $stavka->id : $loop->index }}"
+                                        <td id="stavka-total-{{ Auth::check() ? $stavka->artikal->id : $stavka['artikal_id'] }}"
                                             class="text-tekst text-lg font-semibold">
                                             {{ Auth::check() ? $stavka->ukupna_cijena : $stavka['formatirana_ukupna_cijena'] }}
                                         </td>
@@ -78,6 +75,31 @@
                 </div>
 
                 <div class="text-center mb-6">
+                    <p class="uppercase text-sm font-bold mb-2">{{ __('Međuzbir:') }}</p>
+                    <span id="cart-subtotal" class="text-xl font-bold text-naslov">
+                        {{ $formatiranaSubtotal }}
+                    </span>
+                    <span class="text-sm font-extrabold text-naslov uppercase">{{ __('eur') }} </span>
+                </div>
+
+                <div id="discount-summary" class="text-center mb-6 {{ $appliedDiscount ? '' : 'hidden' }}">
+                    <p class="uppercase text-sm font-bold mb-2">{{ __('Popust:') }}</p>
+                    <div class="flex items-center justify-center gap-2">
+                        <span id="discount-code" class="font-bold text-green-700">
+                            {{ $appliedDiscount['discount_code'] ?? '' }}
+                        </span>
+                        <button id="remove-discount-btn" type="button"
+                            class="text-red-600 hover:text-red-700 font-bold text-sm">
+                            {{ __('Ukloni') }}
+                        </button>
+                    </div>
+                    <span>-</span><span id="discount-amount" class="font-bold text-green-700">
+                        {{ $formatiranPopust }}
+                    </span>
+                    <span class="text-sm font-extrabold text-green-700 uppercase">{{ __('eur') }} </span>
+                </div>
+
+                <div class="text-center mb-6">
                     <p class="uppercase text-sm font-bold mb-2">{{ __('Ukupna cijena:') }}</p>
                     <span id="cart-total" class="text-3xl font-bold text-naslov">
                         {{ $formatiranaCijenaPorudzbine }}
@@ -87,13 +109,14 @@
 
                 <div class="text-center mb-6">
                     <h4 class="text-xl font-semibold mb-1">{{ __('Kod za popust') }}</h4>
-                    <div class="flex">
+                    <form id="discount-form" class="flex">
                         <input class="w-3/4 p-3 rounded-l border-[#aeadad] text-base uppercase" type="text"
-                            placeholder="POPUST100">
+                            name="code" id="discount-code-input" placeholder="POPUST100">
                         <input type="submit"
                             class="bg-green-600 text-white px-5 py-2 cursor-pointer rounded-r hover:bg-green-700 transition text-lg font-bold"
                             value="OK">
-                    </div>
+                    </form>
+                    <p id="discount-message" class="mt-2 text-sm font-semibold"></p>
                 </div>
 
                 <div class="text-center mb-2">
