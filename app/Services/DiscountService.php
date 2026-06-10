@@ -73,6 +73,8 @@ class DiscountService
             throw ValidationException::withMessages(['code' => __('Kod za popust nije aktivan.')]);
         }
 
+        // Admin-entered Europe/Belgrade times are stored in the app timezone,
+        // so availability checks compare normalized values against now().
         if ($discountCode->starts_at && $discountCode->starts_at->isFuture()) {
             throw ValidationException::withMessages(['code' => __('Kod za popust još nije aktivan.')]);
         }
