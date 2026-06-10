@@ -78,13 +78,30 @@
             }
         }
 
+        function updateLineQuantity(artikalId, quantity) {
+            const quantityInput = document.querySelector(`#stavka-quantity-${artikalId}`);
+
+            if (quantityInput && quantity !== undefined) {
+                quantityInput.value = quantity;
+            }
+        }
+
         const discountForm = document.querySelector('#discount-form');
         if (discountForm) {
             discountForm.addEventListener('submit', function (e) {
                 e.preventDefault();
 
                 const message = document.querySelector('#discount-message');
-                const code = document.querySelector('#discount-code-input').value;
+                const codeInput = document.querySelector('#discount-code-input');
+                const code = codeInput.value.trim();
+
+                if (!code) {
+                    message.textContent = 'Unesite kod za popust.';
+                    message.classList.remove('text-green-700');
+                    message.classList.add('text-red-600');
+                    codeInput.focus();
+                    return;
+                }
 
                 fetch('/cart/discount/apply', {
                     method: 'POST',
@@ -166,6 +183,7 @@
                 })
                 .then(data => {
                     document.querySelector(`#stavka-total-${artikalId}`).textContent = data.stavka_ukupna_cijena;
+                    updateLineQuantity(artikalId, data.kolicina);
                     // Quantity changes can invalidate or resize the current discount.
                     updateCartTotals(data);
                     document.getElementById('cart-count').textContent = data.cart_count;
@@ -191,6 +209,7 @@
                     .then(response => response.json())
                     .then(data => {
                         document.querySelector(`#stavka-total-${artikalId}`).textContent = data.stavka_ukupna_cijena;
+                        updateLineQuantity(artikalId, data.kolicina);
                         updateCartTotals(data);
                         document.getElementById('cart-count').textContent = data.cart_count;
                     })

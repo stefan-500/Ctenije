@@ -99,7 +99,7 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-right">
                                             <div>
-                                                {{ $stavka->artikal->akcijska_cijena ?? $stavka->artikal->cijena }}
+                                                {{ formatirajCijenu($stavka->artikal->akcijska_cijena ?? $stavka->artikal->cijena) }}
                                                 <span class="uppercase text-xs font-bold">eur</span>
                                             </div>
                                         </td>

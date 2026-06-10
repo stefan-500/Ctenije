@@ -227,6 +227,7 @@ class PorudzbinaController extends Controller
 
         return response()->json([
             'stavka_ukupna_cijena' => $formatiranaUkupnaCijenaStavke,
+            'kolicina' => $stavka['kolicina'],
             'porudzbina_ukupno' => $formatiranaCijenaPorudzbine,
             'subtotal' => formatirajCijenu($cartTotals['subtotal']),
             'discount_amount' => formatirajCijenu($cartTotals['discount_amount']),
@@ -287,6 +288,7 @@ class PorudzbinaController extends Controller
 
         return response()->json([
             'stavka_ukupna_cijena' => $formatiranaUkupnaCijenaStavke,
+            'kolicina' => $stavka['kolicina'],
             'porudzbina_ukupno' => $formatiranaCijenaPorudzbine,
             'subtotal' => formatirajCijenu($cartTotals['subtotal']),
             'discount_amount' => formatirajCijenu($cartTotals['discount_amount']),
@@ -354,8 +356,14 @@ class PorudzbinaController extends Controller
 
     public function applyDiscount(Request $request)
     {
+        $request->merge([
+            'code' => trim((string) $request->input('code')),
+        ]);
+
         $data = $request->validate([
             'code' => ['required', 'string', 'max:50'],
+        ], [
+            'code.required' => __('Unesite kod za popust.'),
         ]);
 
         $discountService = app(DiscountService::class);

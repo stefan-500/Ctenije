@@ -147,15 +147,27 @@ it('rejects invalid unknown expired disabled and future-start codes', function (
     DiscountCode::factory()->inactive()->create(['code' => 'NEAKTIVAN20']);
     DiscountCode::factory()->create(['code' => 'SJUTRA10', 'starts_at' => now()->addDay()]);
 
-    $request = fn (?string $code) => $this
+    $request = fn(?string $code) => $this
         ->withSession(['cart' => [$artikal->id => discountCodeCartItem($artikal)]])
-        ->postJson('/cart/discount/apply', array_filter(['code' => $code], fn ($value) => $value !== null));
+        ->postJson('/cart/discount/apply', array_filter(['code' => $code], fn($value) => $value !== null));
 
     $request(null)->assertStatus(422)->assertJsonValidationErrors('code');
     $request('NEPOSTOJI')->assertStatus(422)->assertJsonPath('error', __('Kod za popust nije važeći.'));
     $request('ISTEKAO5')->assertStatus(422)->assertJsonPath('error', __('Kod za popust je istekao.'));
     $request('NEAKTIVAN20')->assertStatus(422)->assertJsonPath('error', __('Kod za popust nije aktivan.'));
     $request('SJUTRA10')->assertStatus(422)->assertJsonPath('error', __('Kod za popust još nije aktivan.'));
+});
+
+it('rejects empty discount code input without storing a cart discount', function () {
+    $artikal = discountCodeArtikal();
+
+    $this->withSession(['cart' => [$artikal->id => discountCodeCartItem($artikal)]])
+        ->postJson('/cart/discount/apply', ['code' => '   '])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('code')
+        ->assertJsonPath('errors.code.0', __('Unesite kod za popust.'));
+
+    expect(session('discount'))->toBeNull();
 });
 
 it('handles minimum order pass fail and cart-change invalidation', function () {
@@ -247,7 +259,7 @@ it('enforces global and per-email usage limits for guests and logged-in users', 
     $this->post('/dostava', discountCodeGuestDeliveryData('guest-limit@example.com'))
         ->assertRedirect();
 
-    $guestOrder = Porudzbina::whereHas('guestDeliveryData', fn ($query) => $query->where('email', 'guest-limit@example.com'))->first();
+    $guestOrder = Porudzbina::whereHas('guestDeliveryData', fn($query) => $query->where('email', 'guest-limit@example.com'))->first();
 
     expect($guestOrder->discount_code)->toBeNull()
         ->and($guestOrder->discount_amount)->toBe(0)
@@ -291,12 +303,14 @@ it('recalculates discounts after quantity increment decrement and item removal',
 
     $this->postJson('/cart/increment', ['artikal_id' => $first->id])
         ->assertOk()
+        ->assertJsonPath('kolicina', 3)
         ->assertJsonPath('subtotal', '70,00')
         ->assertJsonPath('discount_amount', '7,00')
         ->assertJsonPath('porudzbina_ukupno', '63,00');
 
     $this->postJson('/cart/decrement', ['artikal_id' => $first->id])
         ->assertOk()
+        ->assertJsonPath('kolicina', 2)
         ->assertJsonPath('subtotal', '50,00')
         ->assertJsonPath('discount_amount', '5,00')
         ->assertJsonPath('porudzbina_ukupno', '45,00');
@@ -351,7 +365,7 @@ it('keeps guest session discounts across cart reload and persists them to delive
     $this->post('/dostava', discountCodeGuestDeliveryData('guest-discount@example.com'))
         ->assertRedirect();
 
-    $order = Porudzbina::whereHas('guestDeliveryData', fn ($query) => $query->where('email', 'guest-discount@example.com'))->first();
+    $order = Porudzbina::whereHas('guestDeliveryData', fn($query) => $query->where('email', 'guest-discount@example.com'))->first();
 
     expect($order->discount_code)->toBe('USTEDI10')
         ->and($order->subtotal)->toBe(10000)
@@ -478,11 +492,11 @@ it('seeds expected sample codes and enforces database uniqueness and redemption 
         $this->assertDatabaseHas('discount_codes', ['code' => $code]);
     }
 
-    expect(fn () => DiscountCode::factory()->create(['code' => 'USTEDI10']))->toThrow(QueryException::class);
+    expect(fn() => DiscountCode::factory()->create(['code' => 'USTEDI10']))->toThrow(QueryException::class);
 
     if (method_exists(Schema::getFacadeRoot(), 'getIndexes')) {
         $indexes = collect(Schema::getIndexes('discount_code_redemptions'))
-            ->map(fn (array $index) => $index['columns'] ?? [])
+            ->map(fn(array $index) => $index['columns'] ?? [])
             ->values();
 
         expect($indexes->contains(['discount_code_id', 'email']))->toBeTrue();

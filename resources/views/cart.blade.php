@@ -40,6 +40,7 @@
                                                     <i class="fa-solid fa-minus"></i>
                                                 </a>
                                                 <input
+                                                    id="stavka-quantity-{{ Auth::check() ? $stavka->artikal->id : $stavka['artikal_id'] }}"
                                                     class="w-16 text-tekst text-lg font-semibold text-center border-0 bg-gray-100 focus:outline-none focus:ring-0"
                                                     type="text"
                                                     value="{{ Auth::check() ? $stavka->kolicina : $stavka['kolicina'] }}"
