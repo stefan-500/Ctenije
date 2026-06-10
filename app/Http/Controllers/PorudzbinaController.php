@@ -9,8 +9,10 @@ use App\Models\Artikal;
 use Illuminate\Support\Facades\Auth;
 use App\Models\StavkaPorudzbine;
 use App\Services\CartService;
+use App\Services\DiscountService;
 use App\Models\User;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class PorudzbinaController extends Controller
 {
@@ -19,6 +21,8 @@ class PorudzbinaController extends Controller
      */
     public function index()
     {
+        $discountService = app(DiscountService::class);
+
         if (Auth::check()) {
             // Za prijavljene korisnike trenutna porudzbina se uzima iz baze podataka
             $porudzbina = Porudzbina::where('user_id', Auth::id())
@@ -28,6 +32,9 @@ class PorudzbinaController extends Controller
 
             // Ako nema trenutne porudzbine cart ce biti prazan niz
             $stavkePorudzbine = $porudzbina ? $porudzbina->stavkePorudzbine : collect();
+            $cartTotals = $porudzbina
+                ? $discountService->recalculateOrder($porudzbina, Auth::user()->email)
+                : $discountService->totals(null, 0);
 
             foreach ($stavkePorudzbine as $stavka) {
                 $stavka->artikal->cijena = formatirajCijenu($stavka->artikal->cijena);
@@ -36,15 +43,10 @@ class PorudzbinaController extends Controller
                 $stavka->ukupna_cijena = formatirajCijenu($stavka->ukupna_cijena);
             }
 
-            $cijenaPorudzbine = $porudzbina ? $porudzbina->ukupno : 0;
         } else {
             // Ukupna cijena porudzbine se obracunava pomocu stavci iz sesije.
             $stavkePorudzbine = session()->get('cart', []);
-
-            // Ukupna cijena porudzbine
-            $cijenaPorudzbine = array_reduce($stavkePorudzbine, function ($ukupno, $stavka) {
-                return $ukupno + $stavka['kolicina'] * $stavka['cijena'];
-            }, 0);
+            $cartTotals = $discountService->recalculateSession($stavkePorudzbine);
 
             foreach ($stavkePorudzbine as &$stavka) {
                 $stavka['formatirana_cijena'] = formatirajCijenu($stavka['cijena']);
@@ -54,15 +56,26 @@ class PorudzbinaController extends Controller
             $porudzbina = null;
         }
 
-        $formatiranaCijenaPorudzbine = formatirajCijenu($cijenaPorudzbine);
+        $formatiranaSubtotal = formatirajCijenu($cartTotals['subtotal']);
+        $formatiranPopust = formatirajCijenu($cartTotals['discount_amount']);
+        $formatiranaCijenaPorudzbine = formatirajCijenu($cartTotals['total']);
+        $appliedDiscount = $cartTotals['discount'] ?? null;
 
-        return view('cart', compact('porudzbina', 'stavkePorudzbine', 'formatiranaCijenaPorudzbine'));
+        return view('cart', compact(
+            'porudzbina',
+            'stavkePorudzbine',
+            'formatiranaSubtotal',
+            'formatiranPopust',
+            'formatiranaCijenaPorudzbine',
+            'appliedDiscount'
+        ));
     }
 
     public function addToCart(Request $request)
     {
 
         $artikal = Artikal::findOrFail($request->artikal_id);
+        $discountService = app(DiscountService::class);
 
         if ($artikal->dostupna_kolicina == 0) {
             return response()->json(['error' => __('Nema dostupnih količina za ovaj artikal')], 400);
@@ -101,12 +114,11 @@ class PorudzbinaController extends Controller
                 }
                 // Kolicina i ukupna cijena se azuriraju
                 $stavkaPorudzbine->increment('kolicina');
-                $stavkaPorudzbine->ukupna_cijena = $stavkaPorudzbine->artikal->akcijska_cijena ?? $stavkaPorudzbine->artikal->cijena * $stavkaPorudzbine->kolicina;
+                $stavkaPorudzbine->ukupna_cijena = ($stavkaPorudzbine->artikal->akcijska_cijena ?? $stavkaPorudzbine->artikal->cijena) * $stavkaPorudzbine->kolicina;
                 $stavkaPorudzbine->save();
             }
 
-            $porudzbina->ukupno = $porudzbina->stavkePorudzbine->sum('ukupna_cijena');
-            $porudzbina->save();
+            $discountService->recalculateOrder($porudzbina, Auth::user()->email);
 
             $cartCount = $porudzbina->stavkePorudzbine->sum('kolicina');
 
@@ -136,6 +148,7 @@ class PorudzbinaController extends Controller
 
             session()->put('cart', $cart);
             session()->put('cart_count', $cartCount);
+            $discountService->recalculateSession($cart);
         }
 
         return response()->json(['cart_count' => $cartCount]);
@@ -154,6 +167,7 @@ class PorudzbinaController extends Controller
     {
         $artikalId = $request->input('artikal_id');
         $artikal = Artikal::findOrFail($artikalId);
+        $discountService = app(DiscountService::class);
 
         if (Auth::check()) {
             // Trenutna porudzbina prijavljenog korisnika
@@ -178,9 +192,7 @@ class PorudzbinaController extends Controller
             // Ponovno ucitavanje stavki porudzbine zbog azuriranja stavke
             $porudzbina->load('stavkePorudzbine');
 
-            $porudzbina->ukupno = $porudzbina->stavkePorudzbine->sum('ukupna_cijena');
-            $porudzbina->save();
-            $cijenaPorudzbine = $porudzbina->ukupno;
+            $cartTotals = $discountService->recalculateOrder($porudzbina, Auth::user()->email);
 
             $cartCount = $porudzbina->stavkePorudzbine->sum('kolicina');
         } else {
@@ -199,17 +211,20 @@ class PorudzbinaController extends Controller
                 session()->put('cart', $cart);
             }
 
-            $cijenaPorudzbine = array_sum(array_column($cart, 'ukupna_cijena'));
+            $cartTotals = $discountService->recalculateSession($cart);
             $cartCount = array_sum(array_column($cart, 'kolicina'));
             $stavka = $cart[$artikalId];
         }
 
         $formatiranaUkupnaCijenaStavke = formatirajCijenu($stavka['ukupna_cijena']);
-        $formatiranaCijenaPorudzbine = formatirajCijenu($cijenaPorudzbine);
+        $formatiranaCijenaPorudzbine = formatirajCijenu($cartTotals['total']);
 
         return response()->json([
             'stavka_ukupna_cijena' => $formatiranaUkupnaCijenaStavke,
             'porudzbina_ukupno' => $formatiranaCijenaPorudzbine,
+            'subtotal' => formatirajCijenu($cartTotals['subtotal']),
+            'discount_amount' => formatirajCijenu($cartTotals['discount_amount']),
+            'discount' => $cartTotals['discount'] ?? null,
             'cart_count' => $cartCount
         ]);
     }
@@ -217,6 +232,8 @@ class PorudzbinaController extends Controller
 
     public function decrementQuantity(Request $request)
     {
+        $discountService = app(DiscountService::class);
+
         if (Auth::check()) {
             $porudzbina = Porudzbina::where('user_id', Auth::id())
                 ->where('status', 'neobradjeno')
@@ -236,11 +253,10 @@ class PorudzbinaController extends Controller
                 // Ponovno ucitavanje stavki porudzbine zbog azuriranja stavke
                 $porudzbina->load('stavkePorudzbine');
 
-                $porudzbina->ukupno = $porudzbina->stavkePorudzbine->sum('ukupna_cijena');
-                $porudzbina->save();
+                $discountService->recalculateOrder($porudzbina, Auth::user()->email);
             }
 
-            $cijenaPorudzbine = $porudzbina->ukupno;
+            $cartTotals = $discountService->recalculateOrder($porudzbina, Auth::user()->email);
             $cartCount = $porudzbina->stavkePorudzbine->sum('kolicina');
         } else {
             // Neprijavljeni korisnik
@@ -254,18 +270,21 @@ class PorudzbinaController extends Controller
                 session()->put('cart', $cart);
             }
 
-            $cijenaPorudzbine = array_sum(array_column($cart, 'ukupna_cijena'));
+            $cartTotals = $discountService->recalculateSession($cart);
 
             $cartCount = array_sum(array_column($cart, 'kolicina'));
             $stavka = $cart[$artikalId];
         }
 
         $formatiranaUkupnaCijenaStavke = formatirajCijenu($stavka['ukupna_cijena']);
-        $formatiranaCijenaPorudzbine = formatirajCijenu($cijenaPorudzbine);
+        $formatiranaCijenaPorudzbine = formatirajCijenu($cartTotals['total']);
 
         return response()->json([
             'stavka_ukupna_cijena' => $formatiranaUkupnaCijenaStavke,
             'porudzbina_ukupno' => $formatiranaCijenaPorudzbine,
+            'subtotal' => formatirajCijenu($cartTotals['subtotal']),
+            'discount_amount' => formatirajCijenu($cartTotals['discount_amount']),
+            'discount' => $cartTotals['discount'] ?? null,
             'cart_count' => $cartCount
         ]);
     }
@@ -274,6 +293,7 @@ class PorudzbinaController extends Controller
     {
         // artikal_id iz AJAX zahtijeva
         $artikalId = $request->input('artikal_id');
+        $discountService = app(DiscountService::class);
 
         if (Auth::check()) {
             $porudzbina = Porudzbina::where('user_id', Auth::id())
@@ -295,12 +315,12 @@ class PorudzbinaController extends Controller
                 $porudzbina->delete();
                 $cartCount = 0;
                 $porudzbinaUkupno = formatirajCijenu(0);
+                $cartTotals = $discountService->totals(null, 0);
             } else {
-                $porudzbina->ukupno = $porudzbina->stavkePorudzbine->sum('ukupna_cijena');
-                $porudzbina->save();
+                $cartTotals = $discountService->recalculateOrder($porudzbina, Auth::user()->email);
 
                 $cartCount = $porudzbina->stavkePorudzbine->sum('kolicina');
-                $porudzbinaUkupno = formatirajCijenu($porudzbina->ukupno);
+                $porudzbinaUkupno = formatirajCijenu($cartTotals['total']);
             }
         } else {
             $cart = session()->get('cart', []);
@@ -312,18 +332,85 @@ class PorudzbinaController extends Controller
 
             $cartCount = array_sum(array_column($cart, 'kolicina'));
 
-            $cijenaPorudzbine = 0;
-            foreach ($cart as $stavka) {
-                $cijenaPorudzbine += $stavka['cijena'] * $stavka['kolicina'];
-            }
-            $porudzbinaUkupno = formatirajCijenu($cijenaPorudzbine);
-
             session()->put('cart', $cart);
+            $cartTotals = $discountService->recalculateSession($cart);
+            $porudzbinaUkupno = formatirajCijenu($cartTotals['total']);
         }
 
         return response()->json([
             'porudzbina_ukupno' => $porudzbinaUkupno,
+            'subtotal' => formatirajCijenu($cartTotals['subtotal']),
+            'discount_amount' => formatirajCijenu($cartTotals['discount_amount']),
+            'discount' => $cartTotals['discount'] ?? null,
             'cart_count' => $cartCount
+        ]);
+    }
+
+    public function applyDiscount(Request $request)
+    {
+        $data = $request->validate([
+            'code' => ['required', 'string', 'max:50'],
+        ]);
+
+        $discountService = app(DiscountService::class);
+
+        try {
+            if (Auth::check()) {
+                $porudzbina = Porudzbina::where('user_id', Auth::id())
+                    ->where('status', 'neobradjeno')
+                    ->with('stavkePorudzbine')
+                    ->firstOrFail();
+
+                $discountService->applyToOrder($porudzbina, $data['code'], Auth::user()->email);
+                $cartTotals = $discountService->recalculateOrder($porudzbina, Auth::user()->email);
+            } else {
+                $cart = session()->get('cart', []);
+
+                if (empty($cart)) {
+                    return response()->json(['error' => __('Vaša korpa je prazna.')], 422);
+                }
+
+                $discountService->applyToSession($data['code'], $cart);
+                $cartTotals = $discountService->recalculateSession($cart);
+            }
+        } catch (ValidationException $exception) {
+            return response()->json([
+                'error' => $exception->errors()['code'][0] ?? __('Kod za popust nije važeći.'),
+            ], 422);
+        }
+
+        return response()->json([
+            'message' => __('Kod za popust je primijenjen.'),
+            'porudzbina_ukupno' => formatirajCijenu($cartTotals['total']),
+            'subtotal' => formatirajCijenu($cartTotals['subtotal']),
+            'discount_amount' => formatirajCijenu($cartTotals['discount_amount']),
+            'discount' => $cartTotals['discount'] ?? null,
+        ]);
+    }
+
+    public function removeDiscount()
+    {
+        $discountService = app(DiscountService::class);
+
+        if (Auth::check()) {
+            $porudzbina = Porudzbina::where('user_id', Auth::id())
+                ->where('status', 'neobradjeno')
+                ->with('stavkePorudzbine')
+                ->firstOrFail();
+
+            $discountService->removeFromOrder($porudzbina);
+            $cartTotals = $discountService->recalculateOrder($porudzbina, Auth::user()->email);
+        } else {
+            $discountService->removeFromSession();
+            $cartTotals = $discountService->recalculateSession(session()->get('cart', []));
+        }
+
+        return response()->json([
+            'message' => __('Kod za popust je uklonjen.'),
+            'porudzbina_ukupno' => formatirajCijenu($cartTotals['total']),
+            'subtotal' => formatirajCijenu($cartTotals['subtotal']),
+            'discount_amount' => formatirajCijenu($cartTotals['discount_amount']),
+            'discount' => null,
         ]);
     }
 
@@ -369,6 +456,8 @@ class PorudzbinaController extends Controller
 
     public function sacuvajPodatkeDostave(Request $request)
     {
+        $discountService = app(DiscountService::class);
+
         if (Auth::check()) {
             $porudzbina = Porudzbina::where('user_id', Auth::id())
                 ->where('status', 'neobradjeno')
@@ -378,6 +467,8 @@ class PorudzbinaController extends Controller
                 return redirect('/cart')->with('error', __('Nema aktivne porudžbine.'));
             }
 
+            $discountService->recalculateOrder($porudzbina, Auth::user()->email);
+
             return redirect('/placanje');
         } else {
             // Neprijavljeni korisnik
@@ -386,6 +477,10 @@ class PorudzbinaController extends Controller
 
             if (empty($cart)) {
                 return redirect('/cart')->with('error', __('Vaša korpa je prazna.'));
+            }
+
+            if ($request->filled('email')) {
+                $request->merge(['email' => strtolower(trim($request->input('email')))]);
             }
 
             //TODO predstaviti greske na cart.blade
@@ -429,10 +524,7 @@ class PorudzbinaController extends Controller
             // Zbog pronalazenja trenutne porudzbine neprijavljenog korisnika
             $paymentToken = Str::random(64);
 
-            $cijenaPorudzbine = 0;
-            foreach ($cart as $stavka) {
-                $cijenaPorudzbine += $stavka['kolicina'] * $stavka['cijena'];
-            }
+            $cartTotals = $discountService->recalculateSession($cart, $data['email']);
 
             // Cuvanje porudzbine 
             $porudzbina = Porudzbina::create([
@@ -441,7 +533,8 @@ class PorudzbinaController extends Controller
                 'payment_token' => $paymentToken,
                 'datum' => now(),
                 'adresa_isporuke' => $data['adresa'],
-                'ukupno' => $cijenaPorudzbine,
+                'subtotal' => $cartTotals['subtotal'],
+                'ukupno' => $cartTotals['total'],
                 'status' => 'neobradjeno',
             ]);
 
@@ -454,6 +547,8 @@ class PorudzbinaController extends Controller
                     'ukupna_cijena' => $stavka['kolicina'] * $stavka['cijena'],
                 ]);
             }
+
+            $discountService->persistSessionDiscountToOrder($porudzbina, $data['email']);
 
             // Brisanje cart sesije
             // session()->forget('cart');

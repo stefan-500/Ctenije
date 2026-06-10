@@ -25,4 +25,14 @@ class Porudzbina extends Model
     {
         return $this->belongsTo(GuestDeliveryData::class);
     }
+
+    public function discountCode()
+    {
+        return $this->belongsTo(DiscountCode::class);
+    }
+
+    public function discountCodeRedemption()
+    {
+        return $this->hasOne(DiscountCodeRedemption::class);
+    }
 }

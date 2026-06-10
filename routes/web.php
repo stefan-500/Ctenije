@@ -20,6 +20,8 @@ Route::get('/cart-count', [PorudzbinaController::class, 'getCartCount']);
 Route::post('/cart/increment', [PorudzbinaController::class, 'incrementQuantity']);
 Route::post('/cart/decrement', [PorudzbinaController::class, 'decrementQuantity']);
 Route::post('/cart/remove', [PorudzbinaController::class, 'removeFromCart']);
+Route::post('/cart/discount/apply', [PorudzbinaController::class, 'applyDiscount']);
+Route::delete('/cart/discount/remove', [PorudzbinaController::class, 'removeDiscount']);
 
 // Dostava
 Route::get('set-delivery-step', [PorudzbinaController::class, 'setDeliveryStep']);

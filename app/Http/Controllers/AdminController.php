@@ -309,6 +309,8 @@ class AdminController extends Controller
         // Ucitavanje stavki porudzbine sa povezanim artiklima (ukljucujuci soft-deleted artikle)
         $porudzbina->load('stavkePorudzbine.artikal');
 
+        $porudzbina->subtotal = formatirajCijenu($porudzbina->subtotal);
+        $porudzbina->discount_amount = formatirajCijenu($porudzbina->discount_amount);
         $porudzbina->ukupno = formatirajCijenu($porudzbina->ukupno);
 
         // Format the item prices

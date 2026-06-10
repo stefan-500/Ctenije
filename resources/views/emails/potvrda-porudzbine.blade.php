@@ -148,6 +148,12 @@
             </table>
         </div>
 
+        @if ($porudzbina->discount_code)
+            <p class="total">{{ __('Međuzbir:') }} {{ formatirajCijenu($porudzbina->subtotal) }} EUR</p>
+            <p class="total">{{ __('Popust') }} ({{ $porudzbina->discount_code }}):
+                -{{ formatirajCijenu($porudzbina->discount_amount) }} EUR</p>
+        @endif
+
         <!-- Total Cost -->
         <p class="total">{{ __('Ukupno za naplatu:') }} {{ formatirajCijenu($porudzbina->ukupno) }} EUR</p>
 
